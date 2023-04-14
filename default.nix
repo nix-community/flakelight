@@ -13,15 +13,17 @@ let
 
   baseModule = src: inputs: root: {
     withOverlay = final: prev: {
-      flakelite.meta = {
-        platforms = root.systems;
-      } // optionalAttrs (root ? description) {
-        inherit (root) description;
-      } // optionalAttrs (root ? license) {
-        license =
-          if isList root.license
-          then attrVals root.license final.lib.licenses
-          else final.lib.licenses.${root.license};
+      flakelite = exports // {
+        meta = {
+          platforms = root.systems;
+        } // optionalAttrs (root ? description) {
+          inherit (root) description;
+        } // optionalAttrs (root ? license) {
+          license =
+            if isList root.license
+            then attrVals root.license final.lib.licenses
+            else final.lib.licenses.${root.license};
+        };
       };
     };
     checks = { pkgs, lib, ... }:
@@ -266,5 +268,7 @@ let
       "i686-linux"
     ];
   };
+
+  exports = { inherit mkFlake loadNixDir systems; };
 in
-{ inherit mkFlake loadNixDir systems; }
+exports

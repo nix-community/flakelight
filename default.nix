@@ -134,13 +134,17 @@ let
         touch $out
       '';
 
-      mkApp = lib: program: {
-        type = "app";
-        program =
-          if lib.isDerivation program
-          then lib.getExe program
-          else program;
-      };
+      isApp = x: (x ? type) && (x.type == "app") && (x ? program);
+
+      mkApp = lib: app:
+        if isApp app then app
+        else {
+          type = "app";
+          program =
+            if lib.isDerivation app
+            then lib.getExe app
+            else app;
+        };
 
       eachSystem = fn: foldAttrs mergeAttrs { } (map
         (system: mapAttrs

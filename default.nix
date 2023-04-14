@@ -13,6 +13,11 @@ let
 
   baseModule = src: inputs: root: {
     withOverlay = final: prev: {
+      inherit inputs;
+      inputs' = mapAttrs
+        (_: mapAttrs
+          (_: v: v.${prev.system} or { }))
+        inputs;
       flakelite = exports // {
         meta = {
           platforms = root.systems;

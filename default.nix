@@ -32,13 +32,10 @@ let
           + optionalString (!pathExists (src + /.ecrc))
           " -disable-indent-size -disable-max-line-length";
       });
-    devTools = { pkgs, ... }: with pkgs; [
-      nixpkgs-fmt
-      nodePackages.prettier
-    ];
+    devTools = pkgs: with pkgs; [ nixpkgs-fmt nodePackages.prettier ];
     formatters = {
       "*.nix" = "nixpkgs-fmt";
-      "*.md" = "prettier --write";
+      "*.md | *.json | *.yml" = "prettier --write";
     };
   };
 

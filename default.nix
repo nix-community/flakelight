@@ -111,23 +111,21 @@ let
         ((map (m: normalizeModule (m src inputs root'))
           ([ baseModule ] ++ modules)) ++ [ root' ]);
 
+      genPackages = pkgs: mapAttrs (_: v: pkgs.callPackage v { });
+
       pkgsFor = system: import (inputs.nixpkgs or nixpkgs) {
         inherit system;
-        overlays = merged.withOverlays;
+        overlays = merged.withOverlays ++ [
+          (final: _: genPackages final merged.packages)
+        ];
       };
 
       systemPkgs = listToAttrs (map
         (system: nameValuePair system (pkgsFor system))
         root'.systems);
 
-      genPackages = pkgs: mapAttrs (_: v: pkgs.callPackage v { });
-
-      genMutualPackages = pkgs: packageSet:
-        let
-          overlay = final: _: genPackages final packageSet;
-          pkgs' = pkgs.extend overlay;
-        in
-        genAttrs (attrNames packageSet) (p: pkgs'.${p});
+      getPackagesFrom = pkgs: packageSet:
+        genAttrs (attrNames packageSet) (p: pkgs.${p});
 
       mkCheck = pkgs: name: cmd: pkgs.runCommand "check-${name}" { } ''
         cp --no-preserve=mode -r ${src} src
@@ -175,7 +173,7 @@ let
           (replaceDefault merged.packages);
       } // eachSystem (pkgs: rec {
         packages = filterAttrs (_: supportedSystem pkgs)
-          (genMutualPackages pkgs merged.packages);
+          (getPackagesFrom pkgs merged.packages);
         checks = mapAttrs' (k: nameValuePair ("packages-" + k)) packages;
       })))
 

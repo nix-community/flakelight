@@ -56,13 +56,17 @@ let
 
       mkFunc = v: if isFunction v then v else _: v;
 
+      mergeListFns = f1: f2: args: (f1 args) ++ (f2 args);
+      mergeAttrFns = f1: f2: args: (f1 args) // (f2 args);
+
       params = exports // { inherit src inputs root'; };
       applyParams = v: mkFunc v params;
 
-      defaultModule = {
+      moduleDefaults = {
         withOverlays = [ ];
         packages = { };
         devTools = _: [ ];
+        devShells = _: { };
         env = _: { };
         overlays = { };
         apps = _: { };
@@ -75,7 +79,7 @@ let
 
       normalizeModule = module:
         let
-          module' = defaultModule // module;
+          module' = moduleDefaults // module;
         in
         module' // {
           withOverlays = (applyParams module'.withOverlays)
@@ -85,6 +89,10 @@ let
             default = module'.package;
           };
           devTools = mkFunc module'.devTools;
+          devShells = mergeAttrFns (mkFunc module'.devShells)
+            (_: optionalAttrs (module' ? devShell) {
+              default = module'.devShell;
+            });
           env = mkFunc module'.env;
           overlays = (applyParams module'.overlays)
           // optionalAttrs (module' ? overlay) {
@@ -104,13 +112,11 @@ let
         outputs = applyParams root.outputs or { };
       };
 
-      mergeListFns = f1: f2: args: (f1 args) ++ (f2 args);
-      mergeAttrFns = f1: f2: args: (f1 args) // (f2 args);
-
       mergeModules = m1: m2: {
         withOverlays = m1.withOverlays ++ m2.withOverlays;
         packages = m1.packages // m2.packages;
         devTools = mergeListFns m1.devTools m2.devTools;
+        devShells = mergeAttrFns m1.devShells m2.devShells;
         env = mergeAttrFns m1.env m2.env;
         overlays = zipAttrsWith (_: composeManyExtensions)
           [ m1.overlays m2.overlays ];
@@ -122,7 +128,7 @@ let
         formatters = mergeAttrFns m1.formatters m2.formatters;
       };
 
-      merged = foldl mergeModules defaultModule
+      merged = foldl mergeModules moduleDefaults
         ((map (m: normalizeModule (m src inputs root'))
           ([ baseModule ] ++ modules)) ++ [ root' ]);
 
@@ -265,7 +271,7 @@ let
             prev.packages.${system}.default;
           packages = merged.devTools pkgs;
         });
-      }))
+      } // (genPackages pkgs (merged.devShells pkgs))))
 
       (eachSystem root'.perSystem)
 

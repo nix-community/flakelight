@@ -84,8 +84,10 @@ let
     "app"
     "apps"
     "checks"
+    "nixosModule"
     "nixosModules"
     "nixosConfigurations"
+    "template"
     "templates"
     "formatters"
     "systems"
@@ -188,9 +190,15 @@ let
               default = module'.app;
             });
           checks = ensureFn module'.checks;
-          nixosModules = applyParams module'.nixosModules;
+          nixosModules = (applyParams module'.nixosModules)
+          // optionalAttrs (module' ? nixosModule) {
+            default = module'.nixosModule;
+          };
           nixosConfigurations = applyParams module'.nixosConfigurations;
-          templates = applyParams module'.templates;
+          templates = (applyParams module'.templates)
+          // optionalAttrs (module' ? template) {
+            default = module'.template;
+          };
           formatters = ensureFn module'.formatters;
         };
 

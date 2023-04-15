@@ -212,6 +212,7 @@ let
           perSystem = ensureFn rootWithAuto.perSystem or (_: { });
           outputs = applyParams rootWithAuto.outputs or { };
           inherit nixDir;
+          raw = root;
         };
 
       merged = foldl mergeModules moduleDefaults

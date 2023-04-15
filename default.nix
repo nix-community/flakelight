@@ -153,13 +153,7 @@ let
 
       mkApp = lib: app:
         if isApp app then app
-        else {
-          type = "app";
-          program =
-            if lib.isDerivation app
-            then lib.getExe app
-            else app;
-        };
+        else { type = "app"; program = "${app}"; };
 
       eachSystem = fn: foldAttrs mergeAttrs { } (map
         (system: mapAttrs

@@ -81,6 +81,7 @@ let
     "env"
     "overlay"
     "overlays"
+    "app"
     "apps"
     "checks"
     "nixosModules"
@@ -118,13 +119,14 @@ let
 
   callWith = pkgs: x:
     let
-      x' = if (isPath x) || (isString x) then import x else x;
+      x' = ensureFn (if (isPath x) || (isString x) then import x else x);
     in
-    if ! isFunction x' then x'
-    else
-      if functionArgs x' == { }
-      then x' pkgs
-      else pkgs.callPackage x' { };
+    callFn pkgs x';
+
+  callFn = pkgs: f:
+    if functionArgs f == { }
+    then f pkgs
+    else pkgs.callPackage f { };
 
   genPackages = pkgs: mapAttrs (_: callWith pkgs);
 
@@ -181,7 +183,10 @@ let
           // optionalAttrs (module' ? overlay) {
             default = module'.overlay;
           };
-          apps = ensureFn module'.apps;
+          apps = mergeAttrFns (ensureFn module'.apps)
+            (_: optionalAttrs (module' ? app) {
+              default = module'.app;
+            });
           checks = ensureFn module'.checks;
           nixosModules = applyParams module'.nixosModules;
           nixosConfigurations = applyParams module'.nixosConfigurations;
@@ -228,9 +233,12 @@ let
 
       isApp = x: (x ? type) && (x.type == "app") && (x ? program);
 
-      mkApp = lib: app:
-        if isApp app then app
-        else { type = "app"; program = "${app}"; };
+      mkApp = pkgs: app:
+        let
+          app' = callFn pkgs (ensureFn app);
+        in
+        if isApp app' then app'
+        else { type = "app"; program = "${app'}"; };
 
       eachSystem = fn: foldAttrs mergeAttrs { } (map
         (system: mapAttrs
@@ -290,9 +298,9 @@ let
             (merged.checks pkgs);
         in
         optionalAttrs (checks != { }) { inherit checks; }))
-      (eachSystem ({ pkgs, lib, ... }:
+      (eachSystem (pkgs:
         let
-          apps = mapAttrs (_: mkApp lib) (merged.apps pkgs);
+          apps = mapAttrs (_: mkApp pkgs) (merged.apps pkgs);
         in
         optionalAttrs (apps != { }) { inherit apps; }))
 

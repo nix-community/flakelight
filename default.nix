@@ -11,7 +11,10 @@ let
     optionalString parseDrvName pathExists pipe recursiveUpdate removePrefix
     removeSuffix zipAttrsWith;
 
-  exports = { inherit mkFlake loadNixDir systems autoloadAttr; };
+  exports = {
+    inherit mkFlake loadNixDir systems autoloadAttr ensureFn mergeListFns
+      mergeAttrFns mergeModules callWith genPackages supportedSystem;
+  };
 
   baseModule = src: inputs: root: {
     withOverlays = params: [
@@ -46,6 +49,17 @@ let
       "*.md | *.json | *.yml" = "prettier --write";
     };
   };
+
+  loadNixDir = path: genAttrs
+    (pipe (readDir path) [
+      attrNames
+      (filter (s: s != "default.nix"))
+      (filter (hasSuffix ".nix"))
+      (map (removeSuffix ".nix"))
+      (map (removePrefix "+"))
+    ])
+    (p: import (path + (if pathExists
+      (path + "/+${p}.nix") then "/+${p}.nix" else "/${p}.nix")));
 
   autoloadAttr = src: root: attr:
     let
@@ -84,6 +98,46 @@ let
   genAutoAttrs = src: root:
     filterAttrs (_: v: v != null) (genAttrs autoAttrs (autoloadAttr src root));
 
+  ensureFn = v: if isFunction v then v else _: v;
+
+  mergeListFns = f1: f2: args: (f1 args) ++ (f2 args);
+  mergeAttrFns = f1: f2: args: (f1 args) // (f2 args);
+
+  mergeModules = m1: m2: {
+    withOverlays = m1.withOverlays ++ m2.withOverlays;
+    packages = m1.packages // m2.packages;
+    devTools = mergeListFns m1.devTools m2.devTools;
+    devShells = mergeAttrFns m1.devShells m2.devShells;
+    env = mergeAttrFns m1.env m2.env;
+    overlays = zipAttrsWith (_: composeManyExtensions)
+      [ m1.overlays m2.overlays ];
+    apps = mergeAttrFns m1.apps m2.apps;
+    checks = mergeAttrFns m1.checks m2.checks;
+    nixosModules = m1.nixosModules // m2.nixosModules;
+    nixosConfigurations = m1.nixosConfigurations // m2.nixosConfigurations;
+    templates = m1.templates // m2.templates;
+    formatters = mergeAttrFns m1.formatters m2.formatters;
+  };
+
+  callWith = pkgs: x:
+    let
+      x' = if (isPath x) || (isString x) then import x else x;
+    in
+    if ! isFunction x' then x'
+    else
+      if functionArgs x' == { }
+      then x' pkgs
+      else pkgs.callPackage x' { };
+
+  genPackages = pkgs: mapAttrs (_: callWith pkgs);
+
+  getName = root: pkg: root.name or pkg.pname or (parseDrvName pkg).name;
+
+  supportedSystem = { lib, stdenv, ... }: pkg:
+    if pkg ? meta.platforms
+    then lib.meta.availableOn stdenv.hostPlatform pkg
+    else true;
+
   mkFlake = src: inputs: root:
     let
       modules = root.modules or pipe (inputs // { self = { }; }) [
@@ -91,13 +145,8 @@ let
         (mapAttrsToList (_: v: v.flakeliteModule))
       ];
 
-      mkFunc = v: if isFunction v then v else _: v;
-
-      mergeListFns = f1: f2: args: (f1 args) ++ (f2 args);
-      mergeAttrFns = f1: f2: args: (f1 args) // (f2 args);
-
       params = exports // { inherit src inputs root'; };
-      applyParams = v: mkFunc v params;
+      applyParams = v: ensureFn v params;
 
       moduleDefaults = {
         withOverlays = [ ];
@@ -125,22 +174,22 @@ let
           // optionalAttrs (module' ? package) {
             default = module'.package;
           };
-          devTools = mkFunc module'.devTools;
-          devShells = mergeAttrFns (mkFunc module'.devShells)
+          devTools = ensureFn module'.devTools;
+          devShells = mergeAttrFns (ensureFn module'.devShells)
             (_: optionalAttrs (module' ? devShell) {
               default = module'.devShell;
             });
-          env = mkFunc module'.env;
+          env = ensureFn module'.env;
           overlays = (applyParams module'.overlays)
           // optionalAttrs (module' ? overlay) {
             default = module'.overlay;
           };
-          apps = mkFunc module'.apps;
-          checks = mkFunc module'.checks;
+          apps = ensureFn module'.apps;
+          checks = ensureFn module'.checks;
           nixosModules = applyParams module'.nixosModules;
           nixosConfigurations = applyParams module'.nixosConfigurations;
           templates = applyParams module'.templates;
-          formatters = mkFunc module'.formatters;
+          formatters = ensureFn module'.formatters;
         };
 
       root' =
@@ -149,41 +198,13 @@ let
         in
         normalizeModule rootWithAuto // {
           systems = applyParams rootWithAuto.systems or systems.linuxDefault;
-          perSystem = mkFunc rootWithAuto.perSystem or (_: { });
+          perSystem = ensureFn rootWithAuto.perSystem or (_: { });
           outputs = applyParams rootWithAuto.outputs or { };
         };
-
-      mergeModules = m1: m2: {
-        withOverlays = m1.withOverlays ++ m2.withOverlays;
-        packages = m1.packages // m2.packages;
-        devTools = mergeListFns m1.devTools m2.devTools;
-        devShells = mergeAttrFns m1.devShells m2.devShells;
-        env = mergeAttrFns m1.env m2.env;
-        overlays = zipAttrsWith (_: composeManyExtensions)
-          [ m1.overlays m2.overlays ];
-        apps = mergeAttrFns m1.apps m2.apps;
-        checks = mergeAttrFns m1.checks m2.checks;
-        nixosModules = m1.nixosModules // m2.nixosModules;
-        nixosConfigurations = m1.nixosConfigurations // m2.nixosConfigurations;
-        templates = m1.templates // m2.templates;
-        formatters = mergeAttrFns m1.formatters m2.formatters;
-      };
 
       merged = foldl mergeModules moduleDefaults
         ((map (m: normalizeModule (m src inputs root'))
           ([ baseModule ] ++ modules)) ++ [ root' ]);
-
-      callWith = pkgs: x:
-        let
-          x' = if (isPath x) || (isString x) then import x else x;
-        in
-        if ! isFunction x' then x'
-        else
-          if functionArgs x' == { }
-          then x' pkgs
-          else pkgs.callPackage x' { };
-
-      genPackages = pkgs: mapAttrs (_: callWith pkgs);
 
       pkgsFor = system: import (inputs.nixpkgs or nixpkgs) {
         inherit system;
@@ -219,24 +240,16 @@ let
         root'.systems);
 
       mergeOutputs = foldl
-        (acc: new: recursiveUpdate acc ((mkFunc new) acc))
+        (acc: new: recursiveUpdate acc ((ensureFn new) acc))
         { };
-
-      getName = pkg: root.name or pkg.pname or (parseDrvName pkg).name;
 
       replaceDefault = set:
         if set ? default
         then (removeAttrs set [ "default" ]) //
-          { ${getName set.default} = set.default; }
+          { ${getName root' set.default} = set.default; }
         else set;
-
-      supportedSystem = { lib, stdenv, ... }: pkg:
-        if pkg ? meta.platforms
-        then lib.meta.availableOn stdenv.hostPlatform pkg
-        else true;
     in
     mergeOutputs [
-
       (optionalAttrs (merged.packages != { }) ({
         overlays.default = final: _: genPackages
           (final.appendOverlays merged.withOverlays)
@@ -246,12 +259,10 @@ let
           (getPackagesFrom pkgs merged.packages);
         checks = mapAttrs' (k: nameValuePair ("packages-" + k)) packages;
       })))
-
       (prev: optionalAttrs (merged.overlays != { }) ({
         overlays = zipAttrsWith (_: composeManyExtensions)
           [ (prev.overlays or { }) merged.overlays ];
       }))
-
       (eachSystem ({ pkgs, lib, ... }:
         optionalAttrs (merged.formatters pkgs != { }) rec {
           formatter = pkgs.writeShellScriptBin "formatter" ''
@@ -273,7 +284,6 @@ let
               sed 's/Files .* and \(.*\) differ/File \1 not formatted/g'
           '';
         }))
-
       (eachSystem ({ pkgs, lib, ... }:
         let
           checks = mapAttrs
@@ -281,7 +291,6 @@ let
             (merged.checks pkgs);
         in
         optionalAttrs (checks != { }) { inherit checks; }))
-
       (eachSystem ({ pkgs, lib, ... }:
         let
           apps = mapAttrs (_: mkApp lib) (merged.apps pkgs);
@@ -291,7 +300,6 @@ let
       (optionalAttrs (merged.nixosModules != { }) {
         inherit (merged) nixosModules;
       })
-
       (optionalAttrs (merged.nixosConfigurations != { }) {
         inherit (merged) nixosConfigurations;
         checks = mergeOutputs (mapAttrsToList
@@ -301,11 +309,9 @@ let
           })
           merged.nixosConfigurations);
       })
-
       (optionalAttrs (merged.templates != { }) {
         inherit (merged) templates;
       })
-
       (prev: eachSystem ({ pkgs, system, mkShell, ... }: {
         devShells.default = mkShell (merged.env pkgs // {
           inputsFrom = optional (prev ? packages.${system}.default)
@@ -313,22 +319,9 @@ let
           packages = merged.devTools pkgs;
         });
       } // (genPackages pkgs (merged.devShells pkgs))))
-
       (eachSystem root'.perSystem)
-
       root'.outputs
     ];
-
-  loadNixDir = path: genAttrs
-    (pipe (readDir path) [
-      attrNames
-      (filter (s: s != "default.nix"))
-      (filter (hasSuffix ".nix"))
-      (map (removeSuffix ".nix"))
-      (map (removePrefix "+"))
-    ])
-    (p: import (path + (if pathExists
-      (path + "/+${p}.nix") then "/+${p}.nix" else "/${p}.nix")));
 
   systems = rec {
     linuxDefault = [

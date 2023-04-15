@@ -14,7 +14,7 @@ let
   exports = {
     inherit mkFlake systems importDir autoImport autoImportAttrs defaultPkgName
       supportedSystem mergeModules moduleAttrs rootAttrs ensureFn fnConcat
-      fnUpdate callFn callPkg callPkgs tryImport;
+      fnUpdate callFn filterArgs callPkg callPkgs tryImport;
   };
 
   builtinModule = { src, inputs, root }: {
@@ -131,6 +131,8 @@ let
     if functionArgs f' == { } then f' args
     else f' (intersectAttrs (functionArgs f) args);
 
+  filterArgs = x: args: callFn args x;
+
   tryImport = x: if (isPath x) || (isString x) then import x else x;
 
   callPkg = args: f:
@@ -207,21 +209,21 @@ let
           // optionalAttrs (module' ? package) {
             default = module'.package;
           };
-          devTools = ensureFn module'.devTools;
-          devShells = fnUpdate (ensureFn module'.devShells)
+          devTools = filterArgs module'.devTools;
+          devShells = fnUpdate (filterArgs module'.devShells)
             (_: optionalAttrs (module' ? devShell) {
               default = module'.devShell;
             });
-          env = ensureFn module'.env;
+          env = filterArgs module'.env;
           overlays = (applyNonSysArgs module'.overlays)
           // optionalAttrs (module' ? overlay) {
             default = module'.overlay;
           };
-          apps = fnUpdate (ensureFn module'.apps)
+          apps = fnUpdate (filterArgs module'.apps)
             (_: optionalAttrs (module' ? app) {
               default = module'.app;
             });
-          checks = ensureFn module'.checks;
+          checks = filterArgs module'.checks;
           nixosModules = (applyNonSysArgs module'.nixosModules)
           // optionalAttrs (module' ? nixosModule) {
             default = module'.nixosModule;
@@ -231,7 +233,7 @@ let
           // optionalAttrs (module' ? template) {
             default = module'.template;
           };
-          formatters = ensureFn module'.formatters;
+          formatters = filterArgs module'.formatters;
         };
 
       root' =
@@ -240,9 +242,9 @@ let
           fullRoot = (autoImportAttrs nixDir rootAttrs) // root;
         in
         normalizeModule fullRoot // {
-          systems = applyNonSysArgs fullRoot.systems or systems.linuxDefault;
-          perSystem = ensureFn fullRoot.perSystem or (_: { });
-          outputs = applyNonSysArgs fullRoot.outputs or { };
+          systems = applyNonSysArgs (fullRoot.systems or systems.linuxDefault);
+          perSystem = filterArgs (fullRoot.perSystem or { });
+          outputs = applyNonSysArgs (fullRoot.outputs or { });
           inherit nixDir;
           raw = root;
         };

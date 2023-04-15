@@ -11,7 +11,7 @@ let
     optionalString parseDrvName pathExists pipe recursiveUpdate removePrefix
     removeSuffix zipAttrsWith;
 
-  exports = { inherit mkFlake loadNixDir systems; };
+  exports = { inherit mkFlake loadNixDir systems autoloadAttr; };
 
   baseModule = src: inputs: root: {
     withOverlays = params: [
@@ -47,40 +47,42 @@ let
     };
   };
 
-  autoAttrs = src: root:
+  autoloadAttr = src: root: attr:
     let
       nixDir = root.nixDir or (src + /nix);
-      loadAttr = attr:
-        if pathExists (nixDir + "/${attr}.nix")
-        then import (nixDir + "/${attr}.nix")
-        else if pathExists (nixDir + "/${attr}/default.nix")
-        then import (nixDir + "/${attr}")
-        else if pathExists (nixDir + "/${attr}")
-        then loadNixDir (nixDir + "/${attr}")
-        else null;
-      attrs = [
-        "withOverlay"
-        "withOverlays"
-        "package"
-        "packages"
-        "devTools"
-        "devShell"
-        "devShells"
-        "env"
-        "overlay"
-        "overlays"
-        "apps"
-        "checks"
-        "nixosModules"
-        "nixosConfigurations"
-        "templates"
-        "formatters"
-        "systems"
-        "perSystem"
-        "outputs"
-      ];
     in
-    filterAttrs (_: v: v != null) (genAttrs attrs loadAttr);
+    if pathExists (nixDir + "/${attr}.nix")
+    then import (nixDir + "/${attr}.nix")
+    else if pathExists (nixDir + "/${attr}/default.nix")
+    then import (nixDir + "/${attr}")
+    else if pathExists (nixDir + "/${attr}")
+    then loadNixDir (nixDir + "/${attr}")
+    else null;
+
+  autoAttrs = [
+    "withOverlay"
+    "withOverlays"
+    "package"
+    "packages"
+    "devTools"
+    "devShell"
+    "devShells"
+    "env"
+    "overlay"
+    "overlays"
+    "apps"
+    "checks"
+    "nixosModules"
+    "nixosConfigurations"
+    "templates"
+    "formatters"
+    "systems"
+    "perSystem"
+    "outputs"
+  ];
+
+  genAutoAttrs = src: root:
+    filterAttrs (_: v: v != null) (genAttrs autoAttrs (autoloadAttr src root));
 
   mkFlake = src: inputs: root:
     let
@@ -143,7 +145,7 @@ let
 
       root' =
         let
-          rootWithAuto = (autoAttrs src root) // root;
+          rootWithAuto = (genAutoAttrs src root) // root;
         in
         normalizeModule rootWithAuto // {
           systems = applyParams rootWithAuto.systems or systems.linuxDefault;

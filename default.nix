@@ -61,10 +61,7 @@ let
     (p: import (path + (if pathExists
       (path + "/+${p}.nix") then "/+${p}.nix" else "/${p}.nix")));
 
-  autoloadAttr = src: root: attr:
-    let
-      nixDir = root.nixDir or (src + /nix);
-    in
+  autoloadAttr = nixDir: attr:
     if pathExists (nixDir + "/${attr}.nix")
     then import (nixDir + "/${attr}.nix")
     else if pathExists (nixDir + "/${attr}/default.nix")
@@ -95,8 +92,8 @@ let
     "outputs"
   ];
 
-  genAutoAttrs = src: root:
-    filterAttrs (_: v: v != null) (genAttrs autoAttrs (autoloadAttr src root));
+  genAutoAttrs = nixDir:
+    filterAttrs (_: v: v != null) (genAttrs autoAttrs (autoloadAttr nixDir));
 
   ensureFn = v: if isFunction v then v else _: v;
 
@@ -194,12 +191,14 @@ let
 
       root' =
         let
-          rootWithAuto = (genAutoAttrs src root) // root;
+          nixDir = root.nixDir or (src + ./nix);
+          rootWithAuto = (genAutoAttrs nixDir) // root;
         in
         normalizeModule rootWithAuto // {
           systems = applyParams rootWithAuto.systems or systems.linuxDefault;
           perSystem = ensureFn rootWithAuto.perSystem or (_: { });
           outputs = applyParams rootWithAuto.outputs or { };
+          inherit nixDir;
         };
 
       merged = foldl mergeModules moduleDefaults

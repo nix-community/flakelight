@@ -4,20 +4,20 @@
 
 nixpkgs:
 let
-  inherit (builtins) functionArgs isFunction isList isPath isString readDir;
+  inherit (builtins) intersectAttrs isPath readDir;
   inherit (nixpkgs.lib) attrNames attrVals callPackageWith composeManyExtensions
-    filter filterAttrs foldAttrs foldl genAttrs hasSuffix listToAttrs mapAttrs
-    mapAttrsToList mapAttrs' mergeAttrs nameValuePair optional optionalAttrs
-    optionalString parseDrvName pathExists pipe recursiveUpdate removePrefix
-    removeSuffix zipAttrsWith;
+    filter filterAttrs foldAttrs foldl functionArgs genAttrs hasSuffix
+    isFunction isList isString listToAttrs mapAttrs mapAttrsToList mapAttrs'
+    mergeAttrs nameValuePair optional optionalAttrs optionalString parseDrvName
+    pathExists pipe recursiveUpdate removePrefix removeSuffix zipAttrsWith;
 
   exports = {
     inherit mkFlake systems importDir autoImport autoImportAttrs defaultPkgName
       supportedSystem mergeModules moduleAttrs rootAttrs ensureFn fnConcat
-      fnUpdate callFn callAuto callAttrsAuto;
+      fnUpdate callFn callPkg callPkgs tryImport;
   };
 
-  builtinModule = src: inputs: root: {
+  builtinModule = { src, inputs, root }: {
     withOverlays = params: [
       (final: prev: {
         flakelite = params // {
@@ -125,20 +125,22 @@ let
   };
 
   callFn = args: f:
-    if functionArgs f == { }
-    then f args
-    else
-      if args ? callPackage
-      then args.callPackage f { }
-      else callPackageWith args f { };
-
-  callAuto = args: x:
     let
-      x' = ensureFn (if (isPath x) || (isString x) then import x else x);
+      f' = ensureFn f;
     in
-    callFn args x';
+    if functionArgs f' == { } then f' args
+    else f' (intersectAttrs (functionArgs f) args);
 
-  callAttrsAuto = args: mapAttrs (_: callAuto args);
+  tryImport = x: if (isPath x) || (isString x) then import x else x;
+
+  callPkg = args: f:
+    let
+      f' = ensureFn (tryImport f);
+    in
+    if functionArgs f' == { } then f' args
+    else (args.callPackage or (callPackageWith args)) f' { };
+
+  callPkgs = pkgs: mapAttrs (_: callPkg pkgs);
 
   defaultPkgName = root: pkg: root.name or pkg.pname or (parseDrvName pkg).name;
 
@@ -177,7 +179,7 @@ let
         inherit (inputs.nixpkgs) lib;
       };
 
-      applyNonSysArgs = x: ensureFn x nonSysArgs;
+      applyNonSysArgs = callFn nonSysArgs;
 
       moduleAttrDefaults = {
         withOverlays = [ ];
@@ -246,22 +248,19 @@ let
         };
 
       merged = foldl mergeModules moduleAttrDefaults
-        ((map (m: normalizeModule (m src inputs' root'))
+        ((map (m: normalizeModule (applyNonSysArgs m))
           ([ builtinModule ] ++ modules)) ++ [ root' ]);
 
       pkgsFor = system: import inputs'.nixpkgs {
         inherit system;
         overlays = merged.withOverlays ++ [
-          (final: _: callAttrsAuto final merged.packages)
+          (final: _: callPkgs final merged.packages)
         ];
       };
 
       systemPkgs = listToAttrs (map
         (system: nameValuePair system (pkgsFor system))
         root'.systems);
-
-      replaceAttrsFrom = source: attrset:
-        genAttrs (attrNames attrset) (n: source.${n});
 
       mkCheck = pkgs: name: cmd:
         if pkgs.lib.isDerivation cmd then cmd else
@@ -276,7 +275,7 @@ let
 
       mkApp = pkgs: app:
         let
-          app' = callFn pkgs (ensureFn app);
+          app' = callFn pkgs app;
         in
         if isApp app' then app'
         else { type = "app"; program = "${app'}"; };
@@ -299,12 +298,12 @@ let
     in
     recUpdateSets [
       (optionalAttrs (merged.packages != { }) ({
-        overlays.default = final: _: callAttrsAuto
+        overlays.default = final: _: callPkgs
           (final.appendOverlays merged.withOverlays)
           (replaceDefault merged.packages);
       } // eachSystem (pkgs: rec {
         packages = filterAttrs (_: supportedSystem pkgs)
-          (replaceAttrsFrom pkgs merged.packages);
+          (intersectAttrs merged.packages pkgs);
         checks = mapAttrs' (n: nameValuePair ("packages-" + n)) packages;
       })))
       (prev: optionalAttrs (merged.overlays != { }) ({
@@ -363,7 +362,7 @@ let
             prev.packages.${system}.default;
           packages = merged.devTools pkgs;
         });
-      } // (callAttrsAuto pkgs (merged.devShells pkgs))))
+      } // (callPkgs pkgs (merged.devShells pkgs))))
       (eachSystem root'.perSystem)
       root'.outputs
     ];

@@ -281,12 +281,13 @@ let
   loadNixDir = path: genAttrs
     (pipe (readDir path) [
       attrNames
+      (filter (s: s != "default.nix"))
       (filter (hasSuffix ".nix"))
       (map (removeSuffix ".nix"))
       (map (removePrefix "+"))
     ])
-    (p: import (path +
-      (if pathExists (path + "/${p}.nix") then "/${p}.nix" else "/+${p}.nix")));
+    (p: import (path + (if pathExists
+      (path + "/+${p}.nix") then "/+${p}.nix" else "/${p}.nix")));
 
   systems = rec {
     linuxDefault = [

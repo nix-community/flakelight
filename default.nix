@@ -56,10 +56,10 @@ let
       (filter (s: s != "default.nix"))
       (filter (hasSuffix ".nix"))
       (map (removeSuffix ".nix"))
-      (map (removePrefix "+"))
+      (map (removePrefix "_"))
     ])
     (p: import (path + (if pathExists
-      (path + "/+${p}.nix") then "/+${p}.nix" else "/${p}.nix")));
+      (path + "/_${p}.nix") then "/_${p}.nix" else "/${p}.nix")));
 
   autoloadAttr = nixDir: attr:
     if pathExists (nixDir + "/${attr}.nix")

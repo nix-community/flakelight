@@ -47,6 +47,46 @@ let
     };
   };
 
+  autoAttrs = src:
+    let
+      loadAttr = attr:
+        if pathExists (src + "/nix/${attr}.nix")
+        then import (src + "/nix/${attr}.nix")
+        else if pathExists (src + "/nix/${attr}/default.nix")
+        then import (src + "/nix/${attr}")
+        else if pathExists (src + "/nix/${attr}")
+        then loadNixDir (src + "/nix/${attr}")
+        else if pathExists (src + "/${attr}.nix")
+        then import (src + "/${attr}.nix")
+        else if pathExists (src + "/${attr}/default.nix")
+        then import (src + "/${attr}")
+        else if pathExists (src + "/${attr}")
+        then loadNixDir (src + "/${attr}")
+        else null;
+      attrs = [
+        "withOverlay"
+        "withOverlays"
+        "package"
+        "packages"
+        "devTools"
+        "devShell"
+        "devShells"
+        "env"
+        "overlay"
+        "overlays"
+        "apps"
+        "checks"
+        "nixosModules"
+        "nixosConfigurations"
+        "templates"
+        "formatters"
+        "systems"
+        "perSystem"
+        "outputs"
+      ];
+    in
+    filterAttrs (_: v: v != null) (genAttrs attrs loadAttr);
+
   mkFlake = src: inputs: root:
     let
       modules = root.modules or pipe (inputs // { self = { }; }) [
@@ -106,11 +146,15 @@ let
           formatters = mkFunc module'.formatters;
         };
 
-      root' = normalizeModule root // {
-        systems = applyParams root.systems or systems.linuxDefault;
-        perSystem = mkFunc root.perSystem or (_: { });
-        outputs = applyParams root.outputs or { };
-      };
+      root' =
+        let
+          rootWithAuto = (autoAttrs src) // root;
+        in
+        normalizeModule rootWithAuto // {
+          systems = applyParams rootWithAuto.systems or systems.linuxDefault;
+          perSystem = mkFunc rootWithAuto.perSystem or (_: { });
+          outputs = applyParams rootWithAuto.outputs or { };
+        };
 
       mergeModules = m1: m2: {
         withOverlays = m1.withOverlays ++ m2.withOverlays;

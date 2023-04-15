@@ -11,26 +11,29 @@ let
     optionalAttrs optionalString parseDrvName pathExists pipe recursiveUpdate
     removeSuffix zipAttrsWith;
 
+  exports = { inherit mkFlake loadNixDir systems; };
+
   baseModule = src: inputs: root: {
-    withOverlay = final: prev: {
-      flakelite = exports // {
-        inherit inputs;
-        inputs' = mapAttrs
-          (_: mapAttrs
-            (_: v: v.${prev.system} or { }))
-          inputs;
-        meta = {
-          platforms = root.systems;
-        } // optionalAttrs (root ? description) {
-          inherit (root) description;
-        } // optionalAttrs (root ? license) {
-          license =
-            if isList root.license
-            then attrVals root.license final.lib.licenses
-            else final.lib.licenses.${root.license};
+    withOverlays = params: [
+      (final: prev: {
+        flakelite = params // {
+          inputs' = mapAttrs
+            (_: mapAttrs
+              (_: v: v.${prev.system} or { }))
+            inputs;
+          meta = {
+            platforms = root.systems;
+          } // optionalAttrs (root ? description) {
+            inherit (root) description;
+          } // optionalAttrs (root ? license) {
+            license =
+              if isList root.license
+              then attrVals root.license final.lib.licenses
+              else final.lib.licenses.${root.license};
+          };
         };
-      };
-    };
+      })
+    ];
     checks = { pkgs, lib, ... }:
       (optionalAttrs (pathExists (src + /.editorconfig)) {
         editorconfig = "${lib.getExe pkgs.editorconfig-checker}"
@@ -51,6 +54,11 @@ let
         (mapAttrsToList (_: v: v.flakeliteModule))
       ];
 
+      mkFunc = v: if isFunction v then v else _: v;
+
+      params = exports // { inherit src inputs root'; };
+      applyParams = v: mkFunc v params;
+
       defaultModule = {
         withOverlays = [ ];
         packages = { };
@@ -65,30 +73,39 @@ let
         formatters = _: { };
       };
 
-      mergeListFns = f1: f2: args: (f1 args) ++ (f2 args);
-      mergeAttrFns = f1: f2: args: (f1 args) // (f2 args);
-
-      mkFunc = v: if isFunction v then v else _: v;
-
       normalizeModule = module:
         let
           module' = defaultModule // module;
         in
         module' // {
-          withOverlays = module'.withOverlays
+          withOverlays = (applyParams module'.withOverlays)
           ++ optional (module' ? withOverlay) module'.withOverlay;
-          packages = module'.packages // optionalAttrs (module' ? package) {
+          packages = (applyParams module'.packages)
+          // optionalAttrs (module' ? package) {
             default = module'.package;
           };
           devTools = mkFunc module'.devTools;
           env = mkFunc module'.env;
-          overlays = module'.overlays // optionalAttrs (module' ? overlay) {
+          overlays = (applyParams module'.overlays)
+          // optionalAttrs (module' ? overlay) {
             default = module'.overlay;
           };
           apps = mkFunc module'.apps;
           checks = mkFunc module'.checks;
+          nixosModules = applyParams module'.nixosModules;
+          nixosConfigurations = applyParams module'.nixosConfigurations;
+          templates = applyParams module'.templates;
           formatters = mkFunc module'.formatters;
         };
+
+      root' = normalizeModule root // {
+        systems = applyParams root.systems or systems.linuxDefault;
+        perSystem = mkFunc root.perSystem or (_: { });
+        outputs = applyParams root.outputs or { };
+      };
+
+      mergeListFns = f1: f2: args: (f1 args) ++ (f2 args);
+      mergeAttrFns = f1: f2: args: (f1 args) // (f2 args);
 
       mergeModules = m1: m2: {
         withOverlays = m1.withOverlays ++ m2.withOverlays;
@@ -103,12 +120,6 @@ let
         nixosConfigurations = m1.nixosConfigurations // m2.nixosConfigurations;
         templates = m1.templates // m2.templates;
         formatters = mergeAttrFns m1.formatters m2.formatters;
-      };
-
-      root' = normalizeModule root // {
-        systems = root.systems or systems.linuxDefault;
-        perSystem = mkFunc root.perSystem or (_: { });
-        outputs = root.outputs or { };
       };
 
       merged = foldl mergeModules defaultModule
@@ -276,7 +287,5 @@ let
       "i686-linux"
     ];
   };
-
-  exports = { inherit mkFlake loadNixDir systems; };
 in
 exports

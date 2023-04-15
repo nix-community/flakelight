@@ -232,6 +232,12 @@ let
 
       (optionalAttrs (merged.nixosConfigurations != { }) {
         inherit (merged) nixosConfigurations;
+        checks = mergeOutputs (mapAttrsToList
+          (k: v: {
+            ${v.config.nixpkgs.system}."nixos-${k}" =
+              v.config.system.build.toplevel;
+          })
+          merged.nixosConfigurations);
       })
 
       (optionalAttrs (merged.templates != { }) {

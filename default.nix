@@ -4,12 +4,12 @@
 
 nixpkgs:
 let
-  inherit (builtins) readDir;
+  inherit (builtins) functionArgs isFunction isList isPath isString readDir;
   inherit (nixpkgs.lib) attrNames attrVals composeManyExtensions filter
-    filterAttrs foldAttrs foldl genAttrs hasSuffix isFunction isList listToAttrs
-    mapAttrs mapAttrsToList mapAttrs' mergeAttrs nameValuePair optional
-    optionalAttrs optionalString parseDrvName pathExists pipe recursiveUpdate
-    removeSuffix zipAttrsWith;
+    filterAttrs foldAttrs foldl genAttrs hasSuffix listToAttrs mapAttrs
+    mapAttrsToList mapAttrs' mergeAttrs nameValuePair optional optionalAttrs
+    optionalString parseDrvName pathExists pipe recursiveUpdate removeSuffix
+    zipAttrsWith;
 
   exports = { inherit mkFlake loadNixDir systems; };
 
@@ -126,7 +126,17 @@ let
         ((map (m: normalizeModule (m src inputs root'))
           ([ baseModule ] ++ modules)) ++ [ root' ]);
 
-      genPackages = pkgs: mapAttrs (_: v: pkgs.callPackage v { });
+      callWith = pkgs: x:
+        let
+          x' = if (isPath x) || (isString x) then import x else x;
+        in
+        if ! isFunction x' then x'
+        else
+          if functionArgs x' == { }
+          then x' pkgs
+          else pkgs.callPackage x' { };
+
+      genPackages = pkgs: mapAttrs (_: callWith pkgs);
 
       pkgsFor = system: import (inputs.nixpkgs or nixpkgs) {
         inherit system;

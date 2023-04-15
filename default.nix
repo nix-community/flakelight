@@ -47,21 +47,16 @@ let
     };
   };
 
-  autoAttrs = src:
+  autoAttrs = src: root:
     let
+      nixDir = root.nixDir or (src + /nix);
       loadAttr = attr:
-        if pathExists (src + "/nix/${attr}.nix")
-        then import (src + "/nix/${attr}.nix")
-        else if pathExists (src + "/nix/${attr}/default.nix")
-        then import (src + "/nix/${attr}")
-        else if pathExists (src + "/nix/${attr}")
-        then loadNixDir (src + "/nix/${attr}")
-        else if pathExists (src + "/${attr}.nix")
-        then import (src + "/${attr}.nix")
-        else if pathExists (src + "/${attr}/default.nix")
-        then import (src + "/${attr}")
-        else if pathExists (src + "/${attr}")
-        then loadNixDir (src + "/${attr}")
+        if pathExists (nixDir + "/${attr}.nix")
+        then import (nixDir + "/${attr}.nix")
+        else if pathExists (nixDir + "/${attr}/default.nix")
+        then import (nixDir + "/${attr}")
+        else if pathExists (nixDir + "/${attr}")
+        then loadNixDir (nixDir + "/${attr}")
         else null;
       attrs = [
         "withOverlay"
@@ -148,7 +143,7 @@ let
 
       root' =
         let
-          rootWithAuto = (autoAttrs src) // root;
+          rootWithAuto = (autoAttrs src root) // root;
         in
         normalizeModule rootWithAuto // {
           systems = applyParams rootWithAuto.systems or systems.linuxDefault;

@@ -8,8 +8,8 @@ let
   inherit (nixpkgs.lib) attrNames attrVals composeManyExtensions filter
     filterAttrs foldAttrs foldl genAttrs hasSuffix listToAttrs mapAttrs
     mapAttrsToList mapAttrs' mergeAttrs nameValuePair optional optionalAttrs
-    optionalString parseDrvName pathExists pipe recursiveUpdate removeSuffix
-    zipAttrsWith;
+    optionalString parseDrvName pathExists pipe recursiveUpdate removePrefix
+    removeSuffix zipAttrsWith;
 
   exports = { inherit mkFlake loadNixDir systems; };
 
@@ -283,8 +283,10 @@ let
       attrNames
       (filter (hasSuffix ".nix"))
       (map (removeSuffix ".nix"))
+      (map (removePrefix "+"))
     ])
-    (p: import (path + "/${p}.nix"));
+    (p: import (path +
+      (if pathExists (path + "/${p}.nix") then "/${p}.nix" else "/+${p}.nix")));
 
   systems = rec {
     linuxDefault = [

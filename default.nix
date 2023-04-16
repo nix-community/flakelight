@@ -12,6 +12,8 @@ let
     optionalString parseDrvName pathExists pipe recursiveUpdate removePrefix
     removeSuffix zipAttrsWith;
 
+  /* Attributes in flakelite's lib output.
+  */
   exports = {
     inherit mkFlake systems importDir autoImport autoImportAttrs defaultPkgName
       supportedSystem mergeModules moduleAttrs rootAttrs ensureFn callFn
@@ -19,18 +21,26 @@ let
       fnMergeAttrs;
   };
 
+  /* Module which is always included as first module.
+  */
   builtinModule = { src, inputs, root }: {
+    # Ensures nixpkgs and flakelite are available for modules.
     inputs = {
       flakelite = localInputs.self;
       inherit (localInputs) nixpkgs;
     };
     withOverlays = params: [
       (final: prev: {
+        # Allows access to flakelite lib functions from package sets.
+        # Also adds pkgs-specific additional args.
         flakelite = params // {
+          # Inputs with system auto-selected.
+          # i.e. inputs.self.packages.${system} -> inputs'.self.packages
           inputs' = mapAttrs
             (_: mapAttrs
               (_: v: v.${prev.system} or { }))
             inputs;
+          # Default package meta attribute generated from root module attrs.
           meta = {
             platforms = root.systems;
           } // optionalAttrs (root ? description) {
@@ -45,6 +55,8 @@ let
       })
     ];
     checks = { pkgs, lib, ... }:
+      # Enable editorconfig support if detected.
+      # By default, high false-positive flags are disabled.
       (optionalAttrs (pathExists (src + /.editorconfig)) {
         editorconfig = "${lib.getExe pkgs.editorconfig-checker}"
           + optionalString (!pathExists (src + /.ecrc))
@@ -57,6 +69,11 @@ let
     };
   };
 
+  /* Import each nix file in a directory as attrs. Attr name is file name with
+     extension stripped. To allow use in an importable directory, default.nix is
+     skipped. To provide a file that will result in a "default" attr, name the
+     file "_default.nix".
+  */
   importDir = path: genAttrs
     (pipe (readDir path) [
       attrNames
@@ -68,6 +85,12 @@ let
     (p: import (path + (if pathExists
       (path + "/_${p}.nix") then "/_${p}.nix" else "/${p}.nix")));
 
+  /* Try to load an attr from a directory. If a nix file by that name exits,
+     import it. If an importable directory with that name exists, import it.
+     Else, if a non-importable directory with that name exists, load the nix
+     files in that dir as an attrset. Returns null if the attr could not be
+     loaded.
+  */
   autoImport = dir: attr:
     if pathExists (dir + "/${attr}.nix")
     then import (dir + "/${attr}.nix")
@@ -77,6 +100,8 @@ let
     then importDir (dir + "/${attr}")
     else null;
 
+  /* List of attrs that can be provided by a module.
+  */
   moduleAttrs = [
     "inputs"
     "withOverlay"
@@ -100,6 +125,9 @@ let
     "formatters"
   ];
 
+  /* List of handled attrs in root module. Does not have optionally checked
+     attrs like name, description, or license, or attrs used by modules.
+  */
   rootAttrs = moduleAttrs ++ [
     "systems"
     "perSystem"
@@ -107,16 +135,28 @@ let
     "nixDir"
   ];
 
+  /* Generate an attrset by importing attrs from dir. Filters null values.
+  */
   autoImportAttrs = dir: attrs:
     filterAttrs (_: v: v != null) (genAttrs attrs (autoImport dir));
 
+  /* Makes the parameter callable, if it isn't. This allows values that are not
+     always functions to be applied to parameters.
+  */
   ensureFn = v: if isFunction v then v else _: v;
 
+  /* Takes a binary function and returns a binary function that operates on
+     functions that return the original parameter types.
+
+     Type: liftFn2 :: (a -> b -> c) -> (d -> a) -> (d -> b) -> d -> c
+  */
   liftFn2 = fn: a: b: args: fn (a args) (b args);
 
   fnConcat = liftFn2 concat;
   fnMergeAttrs = liftFn2 mergeAttrs;
 
+  /* Merges attrsets of overlays, combining overlays with same name.
+  */
   mergeOverlayAttrs = a: b: zipAttrsWith (_: composeManyExtensions) [ a b ];
 
   mergeModules = a: b: mapAttrs (n: v: v a.${n} b.${n}) {
@@ -135,6 +175,10 @@ let
     formatters = fnMergeAttrs;
   };
 
+  /* Calls f with required arguments from args. If the function does not have
+     named arguments, just passes it args instead of nothing like callPackage
+     does. If f is not a function, returns f.
+  */
   callFn = args: f:
     let
       f' = ensureFn f;
@@ -142,10 +186,18 @@ let
     if functionArgs f' == { } then f' args
     else f' (intersectAttrs (functionArgs f) args);
 
+  /* Ensures x is called with only it's required parameters.
+  */
   filterArgs = x: args: callFn args x;
 
+  /* If arg is importable, imports it, else returns arg as is.
+  */
   tryImport = x: if (isPath x) || (isString x) then import x else x;
 
+  /* Like callFn, but intended for functions that return derivations. Uses
+     callPackage so will make result overridable. Trys importing the value if a
+     path.
+  */
   callPkg = args: f:
     let
       f' = ensureFn (tryImport f);
@@ -155,12 +207,21 @@ let
 
   callPkgs = pkgs: mapAttrs (_: callPkg pkgs);
 
+  /* Gets the name for the default package using value set in root module or
+     derivation attrs.
+  */
   defaultPkgName = root: pkg: root.name or pkg.pname or (parseDrvName pkg).name;
 
+  /* Merges elements of a list of sets recursively. Each element can optionally
+     be a function that takes the merged previous elements.
+  */
   recUpdateSets = foldl (acc: x: recursiveUpdate acc ((ensureFn x) acc)) { };
 
   isApp = x: (x ? type) && (x.type == "app") && (x ? program);
 
+  /* Turns app into an app attribute, if it is not already. Passes it pkgs if it
+     is a function.
+  */
   mkApp = pkgs: app:
     let
       app' = callFn pkgs app;
@@ -168,6 +229,10 @@ let
     if isApp app' then app'
     else { type = "app"; program = "${app'}"; };
 
+  /* Makes cmd into a derivation for a flake's checks output. If it is not
+     already a derivation, makes one that runs cmd on the flake source and
+     depends on its success.
+  */
   mkCheck = pkgs: src: name: cmd:
     if pkgs.lib.isDerivation cmd then cmd else
     pkgs.runCommand "check-${name}" { } ''
@@ -177,16 +242,21 @@ let
       touch $out
     '';
 
+  /* Takes a packages set and a package and returns true if the package is
+     supported on the system for that packages set. If unknown, returns true.
+  */
   supportedSystem = { lib, stdenv, ... }: pkg:
     if pkg ? meta.platforms
     then lib.meta.availableOn stdenv.hostPlatform pkg
     else true;
 
   systems = rec {
+    # Linux systems with binary caches.
     linuxDefault = [
       "x86_64-linux"
       "aarch64-linux"
     ];
+    # Linux systems supported as a host platform.
     linuxAll = linuxDefault ++ [
       "armv6l-linux"
       "armv7l-linux"
@@ -194,8 +264,11 @@ let
     ];
   };
 
+  /* Creates flake outputs; takes the path of the flake and the root module.
+  */
   mkFlake = src: root:
     let
+      # These are passed to modules and non-system-dependent module attrs.
       nonSysArgs = exports // {
         args = nonSysArgs;
         flakelite = exports;
@@ -261,6 +334,7 @@ let
           formatters = filterArgs module'.formatters;
         };
 
+      # Root module with autoloads, normalization, and additional attrs.
       root' =
         let
           nixDir = root.nixDir or (src + ./nix);
@@ -279,10 +353,12 @@ let
           raw = root;
         };
 
+      # Merge result of all the modules.
       merged = foldl mergeModules moduleAttrDefaults
         ((map (m: normalizeModule (applyNonSysArgs m))
           ([ builtinModule ] ++ root'.modules)) ++ [ root' ]);
 
+      # Returns package set for a system.
       pkgsFor = system: import merged.inputs.nixpkgs {
         inherit system;
         overlays = merged.withOverlays ++ [
@@ -290,16 +366,21 @@ let
         ];
       };
 
+      # Attrset mapping systems to corresponding package sets.
       systemPkgs = listToAttrs (map
         (system: nameValuePair system (pkgsFor system))
         root'.systems);
 
+      # Calls fn for each supported system. Fn should return an attrset whose
+      # attrs normally would have values in system attrs. Merges results into
+      # attrset with system attrs.
       eachSystem = fn: foldAttrs mergeAttrs { } (map
         (system: mapAttrs
           (_: v: { ${system} = v; })
           (fn systemPkgs.${system}))
         root'.systems);
 
+      # Replaces the "default" attr in set with the default package name.
       replaceDefault = set:
         if set ? default
         then (removeAttrs set [ "default" ]) //
@@ -308,10 +389,12 @@ let
     in
     recUpdateSets [
       (optionalAttrs (merged.packages != { }) ({
+        # Packages in overlay depend on withOverlays which are not in pkg set.
         overlays.default = final: _: callPkgs
           (final.appendOverlays merged.withOverlays)
           (replaceDefault merged.packages);
       } // eachSystem (pkgs: rec {
+        # Packages are generated in overlay on system pkgs; grab from there.
         packages = filterAttrs (_: supportedSystem pkgs)
           (intersectAttrs merged.packages pkgs);
         checks = mapAttrs' (n: nameValuePair ("packages-" + n)) packages;

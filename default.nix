@@ -2,14 +2,15 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-nixpkgs:
+localInputs:
 let
   inherit (builtins) intersectAttrs isPath readDir;
-  inherit (nixpkgs.lib) attrNames attrVals callPackageWith composeManyExtensions
-    filter filterAttrs foldAttrs foldl functionArgs genAttrs hasSuffix
-    isFunction isList isString listToAttrs mapAttrs mapAttrsToList mapAttrs'
-    mergeAttrs nameValuePair optional optionalAttrs optionalString parseDrvName
-    pathExists pipe recursiveUpdate removePrefix removeSuffix zipAttrsWith;
+  inherit (localInputs.nixpkgs.lib) attrNames attrVals callPackageWith
+    composeManyExtensions filter filterAttrs foldAttrs foldl functionArgs
+    genAttrs hasSuffix isFunction isList isString listToAttrs mapAttrs
+    mapAttrsToList mapAttrs' mergeAttrs nameValuePair optional optionalAttrs
+    optionalString parseDrvName pathExists pipe recursiveUpdate removePrefix
+    removeSuffix zipAttrsWith;
 
   exports = {
     inherit mkFlake systems importDir autoImport autoImportAttrs defaultPkgName
@@ -18,6 +19,7 @@ let
   };
 
   builtinModule = { src, inputs, root }: {
+    inputs = { inherit (localInputs) nixpkgs; };
     withOverlays = params: [
       (final: prev: {
         flakelite = params // {
@@ -72,6 +74,7 @@ let
     else null;
 
   moduleAttrs = [
+    "inputs"
     "withOverlay"
     "withOverlays"
     "package"
@@ -109,6 +112,7 @@ let
   fnUpdate = f1: f2: args: (f1 args) // (f2 args);
 
   mergeModules = m1: m2: {
+    inputs = m1.inputs // m2.inputs;
     withOverlays = m1.withOverlays ++ m2.withOverlays;
     packages = m1.packages // m2.packages;
     devTools = fnConcat m1.devTools m2.devTools;
@@ -163,27 +167,26 @@ let
     ];
   };
 
-  mkFlake = src: inputs: root:
+  mkFlake = src: root:
     let
-      modules = root.modules or pipe (inputs // { self = { }; }) [
+      modules = root.modules or (pipe (removeAttrs root'.inputs [ "self" ]) [
         (filterAttrs (_: v: v ? flakeliteModule))
         (mapAttrsToList (_: v: v.flakeliteModule))
-      ];
-
-      inputs' = { inherit nixpkgs; } // inputs;
+      ]);
 
       nonSysArgs = exports // {
         args = nonSysArgs;
         flakelite = exports;
-        inherit src;
-        inputs = inputs';
         root = root';
-        inherit (inputs.nixpkgs) lib;
+        inherit src;
+        inherit (merged) inputs;
+        inherit (merged.inputs.nixpkgs) lib;
       };
 
       applyNonSysArgs = callFn nonSysArgs;
 
       moduleAttrDefaults = {
+        inputs = { };
         withOverlays = [ ];
         packages = { };
         devTools = _: [ ];
@@ -253,7 +256,7 @@ let
         ((map (m: normalizeModule (applyNonSysArgs m))
           ([ builtinModule ] ++ modules)) ++ [ root' ]);
 
-      pkgsFor = system: import inputs'.nixpkgs {
+      pkgsFor = system: import merged.inputs.nixpkgs {
         inherit system;
         overlays = merged.withOverlays ++ [
           (final: _: callPkgs final merged.packages)

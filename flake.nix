@@ -4,11 +4,11 @@
 
 {
   inputs.nixpkgs.url = "nixpkgs/nixos-22.11";
-  outputs = { self, nixpkgs }@inputs:
+  outputs = inputs:
     let
-      lib = import ./. nixpkgs;
+      lib = import ./. inputs;
     in
-    lib.mkFlake ./. inputs {
+    lib.mkFlake ./. {
       outputs = { inherit lib; };
     };
 }

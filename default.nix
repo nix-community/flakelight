@@ -6,11 +6,11 @@ localInputs:
 let
   inherit (builtins) intersectAttrs isPath readDir;
   inherit (localInputs.nixpkgs.lib) attrNames attrVals callPackageWith
-    composeManyExtensions concat filter filterAttrs foldAttrs foldl functionArgs
-    genAttrs hasSuffix isFunction isList isString listToAttrs mapAttrs
-    mapAttrsToList mapAttrs' mergeAttrs nameValuePair optional optionalAttrs
-    optionalString parseDrvName pathExists pipe recursiveUpdate removePrefix
-    removeSuffix zipAttrsWith;
+    composeManyExtensions concat concatStringsSep filter filterAttrs foldAttrs
+    foldl functionArgs genAttrs hasSuffix isFunction isList isString listToAttrs
+    mapAttrs mapAttrsToList mapAttrs' mergeAttrs nameValuePair optional
+    optionalAttrs optionalString parseDrvName pathExists pipe recursiveUpdate
+    removePrefix removeSuffix zipAttrsWith;
 
   /* Attributes in flakelite's lib output.
   */
@@ -109,6 +109,7 @@ let
     "package"
     "packages"
     "devTools"
+    "shellHook"
     "devShell"
     "devShells"
     "env"
@@ -155,15 +156,24 @@ let
   fnConcat = liftFn2 concat;
   fnMergeAttrs = liftFn2 mergeAttrs;
 
+  /* Takes a function which takes a list, and returns a binary function.
+
+     Type: mkBinary :: ([a] -> b) -> a -> a -> b
+  */
+  mkBinary = fn: a: b: fn [ a b ];
+
   /* Merges attrsets of overlays, combining overlays with same name.
   */
-  mergeOverlayAttrs = a: b: zipAttrsWith (_: composeManyExtensions) [ a b ];
+  mergeOverlayAttrs = mkBinary (zipAttrsWith (_: composeManyExtensions));
+
+  fnConcatScripts = liftFn2 (mkBinary (concatStringsSep "\n"));
 
   mergeModules = a: b: mapAttrs (n: v: v a.${n} b.${n}) {
     inputs = mergeAttrs;
     withOverlays = concat;
     packages = mergeAttrs;
     devTools = fnConcat;
+    shellHook = fnConcatScripts;
     devShells = fnMergeAttrs;
     env = fnMergeAttrs;
     overlays = mergeOverlayAttrs;
@@ -285,6 +295,7 @@ let
         withOverlays = [ ];
         packages = { };
         devTools = _: [ ];
+        shellHook = _: "";
         devShells = _: { };
         env = _: { };
         overlays = { };
@@ -308,6 +319,7 @@ let
             default = module'.package;
           };
           devTools = filterArgs module'.devTools;
+          shellHook = filterArgs module'.shellHook;
           devShells = fnMergeAttrs (filterArgs module'.devShells)
             (_: optionalAttrs (module' ? devShell) {
               default = module'.devShell;
@@ -453,6 +465,7 @@ let
           inputsFrom = optional (prev ? packages.${system}.default)
             prev.packages.${system}.default;
           packages = merged.devTools pkgs;
+          shellHook = merged.shellHook pkgs;
         });
       } // (callPkgs pkgs (merged.devShells pkgs))))
       (eachSystem root'.perSystem)

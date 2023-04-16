@@ -6,5 +6,9 @@
 writeShellApplication {
   name = "pre-commit";
   runtimeInputs = [ nix git gnutar ];
-  text = builtins.readFile ./pre-commit;
+  text = ''
+    TREE=$(mktemp -d)
+    git archive "$(git write-tree)" | tar -xC "$TREE"
+    nix flake check "$TREE"
+  '';
 }

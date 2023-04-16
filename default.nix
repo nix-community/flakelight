@@ -20,7 +20,10 @@ let
   };
 
   builtinModule = { src, inputs, root }: {
-    inputs = { inherit (localInputs) nixpkgs; };
+    inputs = {
+      flakelite = localInputs.self;
+      inherit (localInputs) nixpkgs;
+    };
     withOverlays = params: [
       (final: prev: {
         flakelite = params // {

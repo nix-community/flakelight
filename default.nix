@@ -241,14 +241,17 @@ let
 
   /* Makes cmd into a derivation for a flake's checks output. If it is not
      already a derivation, makes one that runs cmd on the flake source and
-     depends on its success.
+     depends on its success. Passes cmd pkgs if it is its a function.
   */
   mkCheck = pkgs: src: name: cmd:
-    if pkgs.lib.isDerivation cmd then cmd else
+    let
+      cmd' = callFn pkgs cmd;
+    in
+    if pkgs.lib.isDerivation cmd' then cmd' else
     pkgs.runCommand "check-${name}" { } ''
       cp --no-preserve=mode -r ${src} src
       cd src
-      ${cmd}
+      ${cmd'}
       touch $out
     '';
 

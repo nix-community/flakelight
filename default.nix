@@ -5,12 +5,12 @@
 localInputs:
 let
   inherit (builtins) intersectAttrs isPath readDir;
-  inherit (localInputs.nixpkgs.lib) attrNames attrVals callPackageWith
-    composeManyExtensions concat concatStringsSep filter filterAttrs foldAttrs
-    foldl functionArgs genAttrs hasSuffix isFunction isList isString listToAttrs
-    mapAttrs mapAttrsToList mapAttrs' mergeAttrs nameValuePair optional
-    optionalAttrs optionalString parseDrvName pathExists pipe recursiveUpdate
-    removePrefix removeSuffix zipAttrsWith;
+  inherit (localInputs.nixpkgs.lib) attrNames attrVals attrValues
+    callPackageWith composeManyExtensions concat concatStringsSep filter
+    filterAttrs foldAttrs foldl functionArgs genAttrs hasSuffix isFunction
+    isList isString listToAttrs mapAttrs mapAttrsToList mapAttrs' mergeAttrs
+    nameValuePair optional optionalAttrs parseDrvName pathExists pipe
+    recursiveUpdate removePrefix removeSuffix zipAttrsWith;
 
   /* Attributes in flakelite's lib output.
   */
@@ -23,59 +23,38 @@ let
 
   /* Module which is always included as first module.
   */
-  builtinModule = { src, inputs, root }: {
+  baseModule = { inputs, root, args }: {
     # Ensures nixpkgs and flakelite are available for modules.
     inputs = {
       flakelite = localInputs.self;
       inherit (localInputs) nixpkgs;
     };
-    withOverlays = params: [
-      (final: prev: {
-        # Allows access to flakelite lib functions from package sets.
-        # Also adds pkgs-specific additional args.
-        flakelite = params // {
-          # Inputs with system auto-selected.
-          # i.e. inputs.self.packages.${system} -> inputs'.self.packages
-          inputs' = mapAttrs
-            (_: mapAttrs
-              (_: v: v.${prev.system} or { }))
-            inputs;
-          # Default package meta attribute generated from root module attrs.
-          meta = {
-            platforms = root.systems;
-          } // optionalAttrs (root ? description) {
-            inherit (root) description;
-          } // optionalAttrs (root ? license) {
-            license =
-              if isList root.license
-              then attrVals root.license final.lib.licenses
-              else final.lib.licenses.${root.license};
-          };
+    withOverlay = final: prev: {
+      # Allows access to flakelite lib functions from package sets.
+      # Also adds pkgs-specific additional args.
+      flakelite = args // {
+        # Inputs with system auto-selected.
+        # i.e. inputs.self.packages.${system} -> inputs'.self.packages
+        inputs' = mapAttrs
+          (_: mapAttrs
+            (_: v: v.${prev.system} or { }))
+          inputs;
+        # Default package meta attribute generated from root module attrs.
+        meta = {
+          platforms = root.systems;
+        } // optionalAttrs (root ? description) {
+          inherit (root) description;
+        } // optionalAttrs (root ? license) {
+          license =
+            if isList root.license
+            then attrVals root.license final.lib.licenses
+            else final.lib.licenses.${root.license};
         };
-      })
-    ];
-    checks = { pkgs, lib, ... }:
-      # Enable editorconfig support if detected.
-      # By default, high false-positive flags are disabled.
-      (optionalAttrs (pathExists (src + /.editorconfig)) {
-        editorconfig = "${lib.getExe pkgs.editorconfig-checker}"
-          + optionalString (!pathExists (src + /.ecrc))
-          " -disable-indent-size -disable-max-line-length";
-      });
-    shellHook = { lib, flakelite }: ''
-      if [ -f flake.nix ] && [ -d .git/hooks ] &&
-         [ ! -f .git/hooks/pre-commit ]; then
-        echo Installing git pre-commit hook...
-        cp ${lib.getExe flakelite.inputs'.flakelite.packages.pre-commit
-            } .git/hooks
-      fi
-    '';
-    devTools = pkgs: with pkgs; [ nixpkgs-fmt nodePackages.prettier ];
-    formatters = {
-      "*.nix" = "nixpkgs-fmt";
-      "*.md | *.json | *.yml" = "prettier --write";
+      };
     };
   };
+
+  builtinModules = attrValues (importDir ./builtin-modules);
 
   /* Import each nix file in a directory as attrs. Attr name is file name with
      extension stripped. To allow use in an importable directory, default.nix is
@@ -376,10 +355,12 @@ let
           raw = root;
         };
 
+      modules = [ baseModule ] ++ builtinModules ++ root'.modules;
+
       # Merge result of all the modules.
       merged = foldl mergeModules moduleAttrDefaults
-        ((map (m: normalizeModule (applyNonSysArgs m))
-          ([ builtinModule ] ++ root'.modules)) ++ [ root' ]);
+        ((map (m: normalizeModule (applyNonSysArgs m)) modules)
+          ++ [ root' ]);
 
       # Returns package set for a system.
       pkgsFor = system: import merged.inputs.nixpkgs {

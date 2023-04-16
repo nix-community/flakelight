@@ -6,7 +6,7 @@ localInputs:
 let
   inherit (builtins) intersectAttrs isPath readDir;
   inherit (localInputs.nixpkgs.lib) attrNames attrVals callPackageWith
-    composeManyExtensions filter filterAttrs foldAttrs foldl functionArgs
+    composeManyExtensions concat filter filterAttrs foldAttrs foldl functionArgs
     genAttrs hasSuffix isFunction isList isString listToAttrs mapAttrs
     mapAttrsToList mapAttrs' mergeAttrs nameValuePair optional optionalAttrs
     optionalString parseDrvName pathExists pipe recursiveUpdate removePrefix
@@ -14,8 +14,9 @@ let
 
   exports = {
     inherit mkFlake systems importDir autoImport autoImportAttrs defaultPkgName
-      supportedSystem mergeModules moduleAttrs rootAttrs ensureFn fnConcat
-      fnUpdate callFn filterArgs callPkg callPkgs tryImport;
+      supportedSystem mergeModules moduleAttrs rootAttrs ensureFn callFn
+      filterArgs callPkg callPkgs tryImport mkApp mkCheck liftFn2 fnConcat
+      fnMergeAttrs;
   };
 
   builtinModule = { src, inputs, root }: {
@@ -108,24 +109,27 @@ let
 
   ensureFn = v: if isFunction v then v else _: v;
 
-  fnConcat = f1: f2: args: (f1 args) ++ (f2 args);
-  fnUpdate = f1: f2: args: (f1 args) // (f2 args);
+  liftFn2 = fn: a: b: args: fn (a args) (b args);
 
-  mergeModules = m1: m2: {
-    inputs = m1.inputs // m2.inputs;
-    withOverlays = m1.withOverlays ++ m2.withOverlays;
-    packages = m1.packages // m2.packages;
-    devTools = fnConcat m1.devTools m2.devTools;
-    devShells = fnUpdate m1.devShells m2.devShells;
-    env = fnUpdate m1.env m2.env;
-    overlays = zipAttrsWith (_: composeManyExtensions)
-      [ m1.overlays m2.overlays ];
-    apps = fnUpdate m1.apps m2.apps;
-    checks = fnUpdate m1.checks m2.checks;
-    nixosModules = m1.nixosModules // m2.nixosModules;
-    nixosConfigurations = m1.nixosConfigurations // m2.nixosConfigurations;
-    templates = m1.templates // m2.templates;
-    formatters = fnUpdate m1.formatters m2.formatters;
+  fnConcat = liftFn2 concat;
+  fnMergeAttrs = liftFn2 mergeAttrs;
+
+  mergeOverlayAttrs = a: b: zipAttrsWith (_: composeManyExtensions) [ a b ];
+
+  mergeModules = a: b: mapAttrs (n: v: v a.${n} b.${n}) {
+    inputs = mergeAttrs;
+    withOverlays = concat;
+    packages = mergeAttrs;
+    devTools = fnConcat;
+    devShells = fnMergeAttrs;
+    env = fnMergeAttrs;
+    overlays = mergeOverlayAttrs;
+    apps = fnMergeAttrs;
+    checks = fnMergeAttrs;
+    nixosModules = mergeAttrs;
+    nixosConfigurations = mergeAttrs;
+    templates = mergeAttrs;
+    formatters = fnMergeAttrs;
   };
 
   callFn = args: f:
@@ -150,6 +154,26 @@ let
 
   defaultPkgName = root: pkg: root.name or pkg.pname or (parseDrvName pkg).name;
 
+  recUpdateSets = foldl (acc: x: recursiveUpdate acc ((ensureFn x) acc)) { };
+
+  isApp = x: (x ? type) && (x.type == "app") && (x ? program);
+
+  mkApp = pkgs: app:
+    let
+      app' = callFn pkgs app;
+    in
+    if isApp app' then app'
+    else { type = "app"; program = "${app'}"; };
+
+  mkCheck = pkgs: src: name: cmd:
+    if pkgs.lib.isDerivation cmd then cmd else
+    pkgs.runCommand "check-${name}" { } ''
+      cp --no-preserve=mode -r ${src} src
+      cd src
+      ${cmd}
+      touch $out
+    '';
+
   supportedSystem = { lib, stdenv, ... }: pkg:
     if pkg ? meta.platforms
     then lib.meta.availableOn stdenv.hostPlatform pkg
@@ -169,11 +193,6 @@ let
 
   mkFlake = src: root:
     let
-      modules = root.modules or (pipe (removeAttrs root'.inputs [ "self" ]) [
-        (filterAttrs (_: v: v ? flakeliteModule))
-        (mapAttrsToList (_: v: v.flakeliteModule))
-      ]);
-
       nonSysArgs = exports // {
         args = nonSysArgs;
         flakelite = exports;
@@ -213,7 +232,7 @@ let
             default = module'.package;
           };
           devTools = filterArgs module'.devTools;
-          devShells = fnUpdate (filterArgs module'.devShells)
+          devShells = fnMergeAttrs (filterArgs module'.devShells)
             (_: optionalAttrs (module' ? devShell) {
               default = module'.devShell;
             });
@@ -222,7 +241,7 @@ let
           // optionalAttrs (module' ? overlay) {
             default = module'.overlay;
           };
-          apps = fnUpdate (filterArgs module'.apps)
+          apps = fnMergeAttrs (filterArgs module'.apps)
             (_: optionalAttrs (module' ? app) {
               default = module'.app;
             });
@@ -245,6 +264,11 @@ let
           fullRoot = (autoImportAttrs nixDir rootAttrs) // root;
         in
         normalizeModule fullRoot // {
+          modules = fullRoot.modules or
+            (pipe (removeAttrs root'.inputs [ "self" ]) [
+              (filterAttrs (_: v: v ? flakeliteModule))
+              (mapAttrsToList (_: v: v.flakeliteModule))
+            ]);
           systems = applyNonSysArgs (fullRoot.systems or systems.linuxDefault);
           perSystem = filterArgs (fullRoot.perSystem or { });
           outputs = applyNonSysArgs (fullRoot.outputs or { });
@@ -254,7 +278,7 @@ let
 
       merged = foldl mergeModules moduleAttrDefaults
         ((map (m: normalizeModule (applyNonSysArgs m))
-          ([ builtinModule ] ++ modules)) ++ [ root' ]);
+          ([ builtinModule ] ++ root'.modules)) ++ [ root' ]);
 
       pkgsFor = system: import merged.inputs.nixpkgs {
         inherit system;
@@ -267,33 +291,11 @@ let
         (system: nameValuePair system (pkgsFor system))
         root'.systems);
 
-      mkCheck = pkgs: name: cmd:
-        if pkgs.lib.isDerivation cmd then cmd else
-        pkgs.runCommand "check-${name}" { } ''
-          cp --no-preserve=mode -r ${src} src
-          cd src
-          ${cmd}
-          touch $out
-        '';
-
-      isApp = x: (x ? type) && (x.type == "app") && (x ? program);
-
-      mkApp = pkgs: app:
-        let
-          app' = callFn pkgs app;
-        in
-        if isApp app' then app'
-        else { type = "app"; program = "${app'}"; };
-
       eachSystem = fn: foldAttrs mergeAttrs { } (map
         (system: mapAttrs
           (_: v: { ${system} = v; })
           (fn systemPkgs.${system}))
         root'.systems);
-
-      recUpdateSets = foldl
-        (acc: new: recursiveUpdate acc ((ensureFn new) acc))
-        { };
 
       replaceDefault = set:
         if set ? default
@@ -312,8 +314,7 @@ let
         checks = mapAttrs' (n: nameValuePair ("packages-" + n)) packages;
       })))
       (prev: optionalAttrs (merged.overlays != { }) ({
-        overlays = zipAttrsWith (_: composeManyExtensions)
-          [ (prev.overlays or { }) merged.overlays ];
+        overlays = mergeOverlayAttrs (prev.overlays or { }) merged.overlays;
       }))
       (eachSystem ({ pkgs, lib, ... }:
         optionalAttrs (merged.formatters pkgs != { }) rec {
@@ -330,7 +331,7 @@ let
               fi
             done &>/dev/null
           '';
-          checks.formatting = mkCheck pkgs "formatting" ''
+          checks.formatting = mkCheck pkgs src "formatting" ''
             ${lib.getExe formatter} .
             ${pkgs.diffutils}/bin/diff -qr ${src} . |\
               sed 's/Files .* and \(.*\) differ/File \1 not formatted/g'
@@ -338,7 +339,7 @@ let
         }))
       (eachSystem (pkgs:
         let
-          checks = mapAttrs (mkCheck pkgs) (merged.checks pkgs);
+          checks = mapAttrs (mkCheck pkgs src) (merged.checks pkgs);
         in
         optionalAttrs (checks != { }) { inherit checks; }))
       (eachSystem (pkgs:

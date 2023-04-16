@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+TREE=$(mktemp -d)
+git archive "$(git write-tree)" | tar -xC "$TREE"
+nix flake check "$TREE"

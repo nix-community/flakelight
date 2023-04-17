@@ -415,7 +415,8 @@ let
                 ${pkgs.fd}/bin/fd "$f" -Htf -x "$0"
               else
                 case "$(${pkgs.coreutils}/bin/basename "$f")" in
-                  ${toString (mapAttrsToList (n: v: "${n}) ${v} \"$f\";;")
+                  ${toString (mapAttrsToList
+                    (n: v: "${n}) ${callFn pkgs v} \"$f\";;")
                     (merged.formatters pkgs))}
                 esac
               fi

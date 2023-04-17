@@ -1,11 +1,12 @@
 { writeShellApplication
+, coreutils
 , nix
 , git
 , gnutar
 }:
 writeShellApplication {
   name = "pre-commit";
-  runtimeInputs = [ nix git gnutar ];
+  runtimeInputs = [ coreutils nix git gnutar ];
   text = ''
     TREE=$(mktemp -d)
     git archive "$(git write-tree)" | tar -xC "$TREE"

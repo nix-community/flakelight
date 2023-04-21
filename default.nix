@@ -462,7 +462,7 @@ let
         });
       } // (callPkgs pkgs (merged.devShells pkgs))))
       (eachSystem root'.perSystem)
-      root'.outputs
+      (_: root'.outputs)
     ];
 in
 exports

@@ -465,4 +465,7 @@ let
       (_: root'.outputs)
     ];
 in
-exports
+{
+  lib = exports;
+  __functor = _: mkFlake;
+}

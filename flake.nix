@@ -6,10 +6,10 @@
   inputs.nixpkgs.url = "nixpkgs/nixos-22.11";
   outputs = inputs:
     let
-      flakelite.lib = import ./. inputs;
+      flakelite = import ./. inputs;
     in
-    flakelite.lib.mkFlake ./. {
+    flakelite ./. {
       nixDir = ./.;
-      outputs = flakelite;
+      outputs = _: flakelite;
     };
 }

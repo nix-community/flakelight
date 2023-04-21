@@ -339,8 +339,9 @@ let
       # Root module with autoloads, normalization, and additional attrs.
       root' =
         let
-          nixDir = root.nixDir or (src + ./nix);
-          fullRoot = (autoImportAttrs nixDir rootAttrs) // root;
+          resolvedRoot = applyNonSysArgs root;
+          nixDir = resolvedRoot.nixDir or (src + ./nix);
+          fullRoot = (autoImportAttrs nixDir rootAttrs) // resolvedRoot;
         in
         normalizeModule fullRoot // {
           modules = fullRoot.modules or
@@ -352,7 +353,6 @@ let
           perSystem = filterArgs (fullRoot.perSystem or { });
           outputs = applyNonSysArgs (fullRoot.outputs or { });
           inherit nixDir;
-          raw = root;
         };
 
       modules = [ baseModule ] ++ builtinModules ++ root'.modules;

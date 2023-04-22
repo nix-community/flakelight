@@ -110,6 +110,9 @@ let
     "nixosModule"
     "nixosModules"
     "nixosConfigurations"
+    "homeModule"
+    "homeModules"
+    "homeConfigurations"
     "template"
     "templates"
     "formatters"
@@ -170,6 +173,8 @@ let
     checks = fnMergeAttrs;
     nixosModules = mergeAttrs;
     nixosConfigurations = mergeAttrs;
+    homeModules = mergeAttrs;
+    homeConfigurations = mergeAttrs;
     templates = mergeAttrs;
     formatters = fnMergeAttrs;
   };
@@ -295,6 +300,8 @@ let
         checks = _: { };
         nixosModules = { };
         nixosConfigurations = { };
+        homeModules = { };
+        homeConfigurations = { };
         templates = { };
         formatters = _: { };
       };
@@ -331,6 +338,11 @@ let
             default = module'.nixosModule;
           };
           nixosConfigurations = applyNonSysArgs module'.nixosConfigurations;
+          homeModules = (applyNonSysArgs module'.homeModules)
+          // optionalAttrs (module' ? homeModule) {
+            default = module'.homeModule;
+          };
+          homeConfigurations = applyNonSysArgs module'.homeConfigurations;
           templates = (applyNonSysArgs module'.templates)
           // optionalAttrs (module' ? template) {
             default = module'.template;
@@ -451,6 +463,17 @@ let
               v.config.system.build.toplevel;
           })
           merged.nixosConfigurations);
+      })
+      (optionalAttrs (merged.homeModules != { }) {
+        inherit (merged) homeModules;
+      })
+      (optionalAttrs (merged.homeConfigurations != { }) {
+        inherit (merged) homeConfigurations;
+        checks = recUpdateSets (mapAttrsToList
+          (n: v: {
+            ${v.config.nixpkgs.system}."home-${n}" = v.activationPackage;
+          })
+          merged.homeConfigurations);
       })
       (optionalAttrs (merged.templates != { }) {
         inherit (merged) templates;

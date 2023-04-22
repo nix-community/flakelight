@@ -8,8 +8,5 @@
     let
       flakelite = import ./. inputs;
     in
-    flakelite ./. {
-      nixDir = ./.;
-      outputs = _: flakelite;
-    };
+    flakelite ./. { outputs = _: flakelite; };
 }

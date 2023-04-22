@@ -368,7 +368,8 @@ let
       root' =
         let
           appliedRoot = applyNonSysArgs root;
-          nixDir = appliedRoot.nixDir or (src + /nix);
+          nixDir = appliedRoot.nixDir or
+            (if pathExists (src + /nix) then src + /nix else src);
           fullRoot = (autoImportAttrs nixDir rootAttrs attrAliases)
             // appliedRoot;
         in

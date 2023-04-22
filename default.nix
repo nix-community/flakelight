@@ -340,7 +340,7 @@ let
       root' =
         let
           resolvedRoot = applyNonSysArgs root;
-          nixDir = resolvedRoot.nixDir or (src + ./nix);
+          nixDir = resolvedRoot.nixDir or (src + /nix);
           fullRoot = (autoImportAttrs nixDir rootAttrs) // resolvedRoot;
         in
         normalizeModule fullRoot // {

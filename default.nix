@@ -7,9 +7,9 @@ let
   inherit (builtins) intersectAttrs isPath readDir;
   inherit (localInputs.nixpkgs.lib) attrNames attrVals attrValues
     callPackageWith composeManyExtensions concat concatStringsSep filter
-    filterAttrs foldAttrs foldl functionArgs genAttrs hasSuffix isFunction
-    isList isString listToAttrs mapAttrs mapAttrsToList mapAttrs' mergeAttrs
-    nameValuePair optional optionalAttrs parseDrvName pathExists pipe
+    filterAttrs findFirst foldAttrs foldl functionArgs genAttrs hasSuffix
+    isFunction isList isString listToAttrs mapAttrs mapAttrsToList mapAttrs'
+    mergeAttrs nameValuePair optional optionalAttrs parseDrvName pathExists pipe
     recursiveUpdate removePrefix removeSuffix zipAttrsWith;
 
   /* Attributes in flakelite's lib output.
@@ -74,20 +74,23 @@ let
     (p: import (path + (if pathExists
       (path + "/_${p}.nix") then "/_${p}.nix" else "/${p}.nix")));
 
-  /* Try to load an attr from a directory. If a nix file by that name exits,
+  /* Try to load a name from a directory. If a nix file by that name exits,
      import it. If an importable directory with that name exists, import it.
      Else, if a non-importable directory with that name exists, load the nix
-     files in that dir as an attrset. Returns null if the attr could not be
-     loaded.
+     files in that dir as an attrset. Returns null if the name could not be
+     loaded. If name is a list, tries all names in that list.
   */
-  autoImport = dir: attr:
-    if pathExists (dir + "/${attr}.nix")
-    then import (dir + "/${attr}.nix")
-    else if pathExists (dir + "/${attr}/default.nix")
-    then import (dir + "/${attr}")
-    else if pathExists (dir + "/${attr}")
-    then importDir (dir + "/${attr}")
-    else null;
+  autoImport = dir: name:
+    if isList name
+    then findFirst (x: x != null) null (map (autoImport dir) name)
+    else
+      if pathExists (dir + "/${name}.nix")
+      then import (dir + "/${name}.nix")
+      else if pathExists (dir + "/${name}/default.nix")
+      then import (dir + "/${name}")
+      else if pathExists (dir + "/${name}")
+      then importDir (dir + "/${name}")
+      else null;
 
   /* List of attrs that can be provided by a module.
   */
@@ -128,10 +131,21 @@ let
     "nixDir"
   ];
 
-  /* Generate an attrset by importing attrs from dir. Filters null values.
+  /* Alternative names for autoloading root attrs.
   */
-  autoImportAttrs = dir: attrs:
-    filterAttrs (_: v: v != null) (genAttrs attrs (autoImport dir));
+  attrAliases = {
+    "nixosConfigurations" = [ "nixos" ];
+    "homeConfigurations" = [ "home" ];
+    # Lets `nix-shell` shell.nix be used automatically if no ./nix dir.
+    "devShell" = [ "shell" ];
+  };
+
+  /* Generate an attrset by importing attrs from dir. Filters null values.
+     Alternative names from aliases are used.
+  */
+  autoImportAttrs = dir: attrs: aliases:
+    filterAttrs (_: v: v != null) (genAttrs attrs
+      (attr: autoImport dir ([ attr ] ++ aliases.${attr} or [ ])));
 
   /* Makes the parameter callable, if it isn't. This allows values that are not
      always functions to be applied to parameters.
@@ -353,9 +367,10 @@ let
       # Root module with autoloads, normalization, and additional attrs.
       root' =
         let
-          resolvedRoot = applyNonSysArgs root;
-          nixDir = resolvedRoot.nixDir or (src + /nix);
-          fullRoot = (autoImportAttrs nixDir rootAttrs) // resolvedRoot;
+          appliedRoot = applyNonSysArgs root;
+          nixDir = appliedRoot.nixDir or (src + /nix);
+          fullRoot = (autoImportAttrs nixDir rootAttrs attrAliases)
+            // appliedRoot;
         in
         normalizeModule fullRoot // {
           modules = fullRoot.modules or

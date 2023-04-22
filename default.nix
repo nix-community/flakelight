@@ -51,6 +51,8 @@ let
             else final.lib.licenses.${root.license};
         };
       };
+      # These attrs are important enough for top-level pkg set.
+      inherit (final.flakelite) inputs inputs';
     };
   };
 

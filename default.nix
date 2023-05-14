@@ -98,6 +98,7 @@ let
     "inputs"
     "withOverlay"
     "withOverlays"
+    "nixpkgsConfig"
     "package"
     "packages"
     "devTools"
@@ -138,6 +139,7 @@ let
     "homeConfigurations" = [ "home" ];
     # Lets `nix-shell` shell.nix be used automatically if no ./nix dir.
     "devShell" = [ "shell" ];
+    "nixpkgsConfig" = [ "nixpkgs/config" ];
   };
 
   /* Generate an attrset by importing attrs from dir. Filters null values.
@@ -177,6 +179,7 @@ let
   mergeModules = a: b: mapAttrs (n: v: v a.${n} b.${n}) {
     inputs = mergeAttrs;
     withOverlays = concat;
+    nixpkgsConfig = mergeAttrs;
     packages = mergeAttrs;
     devTools = fnConcat;
     shellHook = fnConcatScripts;
@@ -304,6 +307,7 @@ let
       moduleAttrDefaults = {
         inputs = { };
         withOverlays = [ ];
+        nixpkgsConfig = { };
         packages = { };
         devTools = _: [ ];
         shellHook = _: "";
@@ -327,6 +331,7 @@ let
         module' // {
           withOverlays = (applyNonSysArgs module'.withOverlays)
           ++ optional (module' ? withOverlay) module'.withOverlay;
+          nixpkgsConfig = applyNonSysArgs module'.nixpkgsConfig;
           packages = (applyNonSysArgs module'.packages)
           // optionalAttrs (module' ? package) {
             default = module'.package;
@@ -395,6 +400,7 @@ let
       # Returns package set for a system.
       pkgsFor = system: import merged.inputs.nixpkgs {
         inherit system;
+        config = merged.nixpkgsConfig;
         overlays = merged.withOverlays ++ [
           (final: _: callPkgs final merged.packages)
         ];

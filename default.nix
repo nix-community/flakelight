@@ -500,13 +500,15 @@ let
         inherit (merged) templates;
       })
       (prev: eachSystem ({ pkgs, system, mkShell, ... }: {
-        devShells.default = mkShell (merged.env pkgs // {
-          inputsFrom = optional (prev ? packages.${system}.default)
-            prev.packages.${system}.default;
-          packages = merged.devTools pkgs;
-          shellHook = merged.shellHook pkgs;
-        });
-      } // (callPkgs pkgs (merged.devShells pkgs))))
+        devShells = {
+          default = mkShell (merged.env pkgs // {
+            inputsFrom = optional (prev ? packages.${system}.default)
+              prev.packages.${system}.default;
+            packages = merged.devTools pkgs;
+            shellHook = merged.shellHook pkgs;
+          });
+        } // (callPkgs pkgs (merged.devShells pkgs));
+      }))
       (eachSystem root'.perSystem)
       (_: root'.outputs)
     ];

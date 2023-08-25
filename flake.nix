@@ -3,13 +3,10 @@
 # SPDX-License-Identifier: MIT
 
 {
-  inputs.nixpkgs.url = "nixpkgs/nixos-22.11";
+  inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
   outputs = inputs:
     let
       flakelite = import ./. inputs;
     in
-    flakelite ./. {
-      nixDir = ./.;
-      outputs = _: flakelite;
-    };
+    flakelite ./. { outputs = flakelite; };
 }

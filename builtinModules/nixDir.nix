@@ -4,8 +4,8 @@
 
 { config, src, lib, flakelight, ... }@args:
 let
-  inherit (lib) isFunction mkOption mkIf mkMerge optionalAttrs;
-  inherit (flakelight) autoImport;
+  inherit (lib) mkOption mkIf mkMerge optionalAttrs;
+  inherit (flakelight) autoImport autoImportArgs;
   inherit (flakelight.types) path;
 in
 {
@@ -17,28 +17,26 @@ in
   config =
     let
       autoImport' = autoImport config.nixDir;
-      autoImportArgs = n:
-        let v = autoImport' n; in
-        if isFunction v then v args else v;
-      outputs = autoImportArgs "outputs";
+      autoImportArgs' = autoImportArgs config.nixDir args;
+      outputs = autoImportArgs' "outputs";
       perSystem = autoImport' "perSystem";
       withOverlays = autoImport' "withOverlays";
       package = autoImport' "package";
-      packages = autoImportArgs "packages";
-      overlays = autoImportArgs "overlays";
-      devShell = autoImportArgs "devShell";
-      devShells = autoImportArgs "devShells";
+      packages = autoImportArgs' "packages";
+      overlays = autoImportArgs' "overlays";
+      devShell = autoImportArgs' "devShell";
+      devShells = autoImportArgs' "devShells";
       app = autoImport' "app";
       apps = autoImport' "apps";
       checks = autoImport' "checks";
       nixosModule = autoImport' "nixosModule";
-      nixosModules = autoImportArgs "nixosModules";
-      nixosConfigurations = autoImportArgs [ "nixosConfigurations" "nixos" ];
+      nixosModules = autoImportArgs' "nixosModules";
+      nixosConfigurations = autoImportArgs' [ "nixosConfigurations" "nixos" ];
       homeModule = autoImport' "homeModule";
-      homeModules = autoImportArgs "homeModules";
-      homeConfigurations = autoImportArgs [ "homeConfigurations" "home" ];
-      template = autoImportArgs "template";
-      templates = autoImportArgs "templates";
+      homeModules = autoImportArgs' "homeModules";
+      homeConfigurations = autoImportArgs' [ "homeConfigurations" "home" ];
+      template = autoImportArgs' "template";
+      templates = autoImportArgs' "templates";
       formatters = autoImport' "formatters";
     in
     mkMerge [

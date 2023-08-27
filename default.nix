@@ -6,7 +6,7 @@ localInputs:
 let
   inherit (builtins) isAttrs isPath readDir;
   inherit (localInputs.nixpkgs.lib) attrNames composeManyExtensions
-    filter findFirst genAttrs getValues hasSuffix isFunction isList mapAttrs
+    filter findFirst genAttrs getValues hasSuffix isFunction isList
     mapAttrsToList pathExists pipe removePrefix removeSuffix evalModules
     mkDefault mkOptionType singleton;
   inherit (localInputs.nixpkgs.lib.types) coercedTo functionTo listOf;
@@ -24,7 +24,7 @@ let
   }).config.outputs;
 
   flakelight = {
-    inherit mkFlake supportedSystem importDir autoImport;
+    inherit mkFlake supportedSystem autoImport autoImportArgs;
 
     types = {
       overlay = mkOptionType {
@@ -90,6 +90,9 @@ let
       then importDir (dir + "/${name}")
       else null;
 
+  autoImportArgs = dir: args: name:
+    let v = autoImport dir name; in
+    if isFunction v then v args else v;
 in
 {
   lib = flakelight;

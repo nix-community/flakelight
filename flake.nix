@@ -5,8 +5,9 @@
 {
   inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
   outputs = inputs:
-    let
-      flakelight = import ./. inputs;
-    in
-    flakelight ./. { outputs = flakelight; };
+    let flakelight = import ./. inputs; in
+    flakelight ./. {
+      outputs = flakelight;
+      templates = import ./templates;
+    };
 }

@@ -4,15 +4,30 @@
 
 { config, lib, flakelight, ... }:
 let
-  inherit (lib) mkOption mkIf;
-  inherit (lib.types) lazyAttrsOf;
+  inherit (lib) mkMerge mkOption mkIf;
+  inherit (lib.types) lazyAttrsOf nullOr;
   inherit (flakelight.types) overlay;
 in
 {
-  options.overlays = mkOption {
-    type = lazyAttrsOf overlay;
-    default = { };
+  options = {
+    overlay = mkOption {
+      type = nullOr overlay;
+      default = null;
+    };
+
+    overlays = mkOption {
+      type = lazyAttrsOf overlay;
+      default = { };
+    };
   };
 
-  config.outputs = mkIf (config.overlays != { }) { inherit (config) overlays; };
+  config = mkMerge [
+    (mkIf (config.overlay != null) {
+      overlays.default = config.overlay;
+    })
+
+    (mkIf (config.overlays != { }) {
+      outputs = { inherit (config) overlays; };
+    })
+  ];
 }

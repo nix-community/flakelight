@@ -47,7 +47,7 @@ in
         }) //
         (genAttrs pkgNames' (n: final.callPackage config.packages.${n} { })));
 
-      overlays.default = final: prev:
+      overlay = final: prev:
         let
           pkgs' = fix (composeManyExtensions config.withOverlays) prev;
           defaultName = getName (callPkg pkgs' config.packages.default);

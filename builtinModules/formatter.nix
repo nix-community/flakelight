@@ -1,12 +1,12 @@
-# flakelite -- Framework for making flakes simple
+# flakelight -- Framework for simplifying flake setup
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, src, lib, flakelite, ... }:
+{ config, src, lib, flakelight, ... }:
 let
   inherit (lib) mkOption mkIf mapAttrsToList;
   inherit (lib.types) lazyAttrsOf nullOr str;
-  inherit (flakelite.types) optFunctionTo;
+  inherit (flakelight.types) optFunctionTo;
 in
 {
   options.formatters = mkOption {

@@ -1,12 +1,12 @@
-# flakelite -- Framework for making flakes simple
+# flakelight -- Framework for simplifying flake setup
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, flakelite, ... }:
+{ config, lib, flakelight, ... }:
 let
   inherit (lib) mkOption mkIf;
   inherit (lib.types) lazyAttrsOf;
-  inherit (flakelite.types) overlay;
+  inherit (flakelight.types) overlay;
 in
 {
   options.overlays = mkOption {

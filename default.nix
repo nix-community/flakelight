@@ -1,4 +1,4 @@
-# flakelite -- Framework for making flakes simple
+# flakelight -- Framework for simplifying flake setup
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
@@ -18,12 +18,12 @@ let
     specialArgs.modulesPath = ./builtinModules;
     modules = builtinModules ++ [
       { inputs.nixpkgs = mkDefault localInputs.nixpkgs; }
-      { _module.args = { inherit src flakelite; }; }
+      { _module.args = { inherit src flakelight; }; }
       root
     ];
   }).config.outputs;
 
-  flakelite = {
+  flakelight = {
     inherit mkFlake supportedSystem importDir autoImport;
 
     types = {
@@ -92,6 +92,6 @@ let
 
 in
 {
-  lib = flakelite;
+  lib = flakelight;
   __functor = _: mkFlake;
 }

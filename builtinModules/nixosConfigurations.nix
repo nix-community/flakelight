@@ -1,4 +1,4 @@
-# flakelite -- Framework for making flakes simple
+# flakelight -- Framework for simplifying flake setup
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 

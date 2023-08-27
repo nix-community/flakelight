@@ -1,14 +1,14 @@
-# flakelite -- Framework for making flakes simple
+# flakelight -- Framework for simplifying flake setup
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, inputs, lib, flakelite, ... }:
+{ config, inputs, lib, flakelight, ... }:
 let
   inherit (builtins) all head isAttrs length;
   inherit (lib) foldAttrs getFiles getValues mapAttrs mergeAttrs mkOption
     mkOptionType showFiles showOption;
   inherit (lib.types) functionTo lazyAttrsOf listOf nonEmptyStr raw uniq;
-  inherit (flakelite.types) optListOf overlay;
+  inherit (flakelight.types) optListOf overlay;
 
   outputs = mkOptionType {
     name = "outputs";

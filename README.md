@@ -1,4 +1,4 @@
-# flakelite
+# flakelight
 
 An opinionated Nix flake framework for making flakes simple.
 

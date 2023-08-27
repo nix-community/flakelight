@@ -1,12 +1,12 @@
-# flakelite -- Framework for making flakes simple
+# flakelight -- Framework for simplifying flake setup
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, src, lib, flakelite, ... }@args:
+{ config, src, lib, flakelight, ... }@args:
 let
   inherit (lib) isFunction mkOption mkIf mkMerge optionalAttrs;
-  inherit (flakelite) autoImport;
-  inherit (flakelite.types) path;
+  inherit (flakelight) autoImport;
+  inherit (flakelight.types) path;
 in
 {
   options.nixDir = mkOption {

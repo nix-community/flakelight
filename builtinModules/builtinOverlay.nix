@@ -1,8 +1,8 @@
-# flakelite -- Framework for making flakes simple
+# flakelight -- Framework for simplifying flake setup
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, src, lib, inputs, outputs, flakelite, ... }:
+{ config, src, lib, inputs, outputs, flakelight, ... }:
 let
   inherit (lib) isList mkOption mkOrder mapAttrs optionalAttrs;
   inherit (lib.types) listOf nullOr oneOf str;
@@ -25,7 +25,7 @@ in
       system = prev.stdenv.hostPlatform.system;
     in
     {
-      inherit src inputs outputs flakelite system;
+      inherit src inputs outputs flakelight system;
       inputs' = mapAttrs (_: mapAttrs (_: v: v.${system} or { })) inputs;
       outputs' = mapAttrs (_: v: v.${system} or { }) outputs;
 

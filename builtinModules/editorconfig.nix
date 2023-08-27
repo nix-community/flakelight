@@ -1,4 +1,4 @@
-# flakelite -- Framework for making flakes simple
+# flakelight -- Framework for simplifying flake setup
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
@@ -7,11 +7,11 @@ let
   inherit (lib) mkEnableOption mkIf optionalString pathExists;
 in
 {
-  options.flakelite.editorconfig =
+  options.flakelight.editorconfig =
     mkEnableOption "editorconfig check" // { default = true; };
 
   config.checks = mkIf
-    (config.flakelite.editorconfig && (pathExists (src + /.editorconfig)))
+    (config.flakelight.editorconfig && (pathExists (src + /.editorconfig)))
     {
       # By default, high false-positive flags are disabled.
       editorconfig = { editorconfig-checker, ... }:

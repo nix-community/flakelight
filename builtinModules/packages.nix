@@ -1,15 +1,15 @@
-# flakelite -- Framework for making flakes simple
+# flakelight -- Framework for simplifying flake setup
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, flakelite, ... }:
+{ config, lib, flakelight, ... }:
 let
   inherit (builtins) attrNames functionArgs intersectAttrs parseDrvName;
   inherit (lib) composeManyExtensions filterAttrs fix genAttrs mapAttrs mapAttrs'
     mkIf mkMerge mkOption mkOrder nameValuePair optional optionalAttrs remove;
   inherit (lib.types) lazyAttrsOf nullOr;
-  inherit (flakelite) supportedSystem;
-  inherit (flakelite.types) packageDef;
+  inherit (flakelight) supportedSystem;
+  inherit (flakelight.types) packageDef;
 
   getName = pkg: pkg.pname or (parseDrvName pkg.name).name;
 

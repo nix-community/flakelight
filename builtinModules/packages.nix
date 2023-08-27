@@ -2,18 +2,17 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, flakelight, ... }:
+{ config, lib, inputs, flakelight, ... }:
 let
-  inherit (builtins) attrNames functionArgs intersectAttrs parseDrvName;
-  inherit (lib) composeManyExtensions filterAttrs fix genAttrs mapAttrs mapAttrs'
-    mkIf mkMerge mkOption mkOrder nameValuePair optional optionalAttrs remove;
-  inherit (lib.types) lazyAttrsOf nullOr;
+  inherit (builtins) parseDrvName;
+  inherit (lib) filterAttrs mapAttrs mapAttrs' mkIf mkMerge mkOption
+    nameValuePair optionalAttrs;
+  inherit (lib.types) lazyAttrsOf nullOr uniq;
   inherit (flakelight) supportedSystem;
-  inherit (flakelight.types) packageDef;
+  inherit (flakelight.types) overlay packageDef;
 
-  getName = pkg: pkg.pname or (parseDrvName pkg.name).name;
-
-  callPkg = pkgs: def: def (intersectAttrs (functionArgs def) pkgs);
+  genPkg = pkgs: pkg: pkgs.callPackage pkg { };
+  genPkgs = pkgs: mapAttrs (_: genPkg pkgs) config.packages;
 in
 {
   options = {
@@ -26,6 +25,12 @@ in
       type = lazyAttrsOf packageDef;
       default = { };
     };
+
+    packageOverlay = mkOption {
+      internal = true;
+      type = uniq overlay;
+      default = _: _: { };
+    };
   };
 
   config = mkMerge [
@@ -34,32 +39,25 @@ in
     })
 
     (mkIf (config.packages != { }) {
-      withOverlays = mkOrder 2000 (final: prev:
+      packageOverlay = final: prev:
         let
-          pkgNames = attrNames config.packages;
-          pkgNames' = remove "default" pkgNames;
-          defaultName = getName (fix (self:
-            prev // (genAttrs pkgNames
-              (n: callPkg self config.packages.${n})))).default;
+          getName = pkg: pkg.pname or (parseDrvName pkg.name).name;
+          defaultPkgName = getName (import inputs.nixpkgs {
+            inherit (prev.stdenv.hostPlatform) system;
+            inherit (config.nixpkgs) config;
+            overlays = config.withOverlays ++ [ (final: _: genPkgs final) ];
+          }).default;
         in
         (optionalAttrs (config.packages ? default) {
-          ${defaultName} = final.callPackage config.packages.default { };
-        }) //
-        (genAttrs pkgNames' (n: final.callPackage config.packages.${n} { })));
+          ${defaultPkgName} = genPkg final config.packages.default;
+        }) // genPkgs final;
 
-      overlay = final: prev:
-        let
-          pkgs' = fix (composeManyExtensions config.withOverlays) prev;
-          defaultName = getName (callPkg pkgs' config.packages.default);
-          pkgNames = (remove "default" (attrNames config.packages))
-            ++ (optional (config.packages ? default) defaultName);
-          pkgs = final.appendOverlays config.withOverlays;
-        in
-        genAttrs pkgNames (n: pkgs.${n});
+      overlay = final: prev: removeAttrs
+        (config.packageOverlay (final.appendOverlays config.withOverlays) prev)
+        [ "default" ];
 
       perSystem = pkgs: rec {
-        packages = filterAttrs (_: supportedSystem pkgs)
-          (mapAttrs (_: v: pkgs.callPackage v { }) config.packages);
+        packages = filterAttrs (_: supportedSystem pkgs) (genPkgs pkgs);
 
         checks = mapAttrs' (n: nameValuePair ("packages-" + n)) packages;
       };

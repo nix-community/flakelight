@@ -61,8 +61,8 @@ in
         (_: v: { ${system} = v; })
         (config.perSystem (import inputs.nixpkgs {
           inherit system;
-          config = config.nixpkgs.config;
-          overlays = config.withOverlays;
+          inherit (config.nixpkgs) config;
+          overlays = config.withOverlays ++ [ config.packageOverlay ];
         })))
       config.systems);
   };

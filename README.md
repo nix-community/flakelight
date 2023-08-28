@@ -1,9 +1,142 @@
-# flakelight
+# Flakelight
 
-An opinionated Nix flake framework for making flakes simple.
+A modular Nix flake framework for simplifying flake definitions.
 
-## Warning
+## Goals
 
-This project is a work in progress. Features and implementation will change.
-Documentation will be added when the feature set is stabilized. Feel free to
-give feedback if you end up using it.
+- Minimize boilerplate needed for flakes
+- Support straightforward configuration of all vanilla flake attributes
+- Be familiar to Nix users using flakes and nixpkgs
+- Allow sharing common configuration using modules
+- Make flakes simpler to read by moving complexity into the framework
+- What can be done automatically, should be
+- Provide good defaults, but let them be changed/disabled
+
+## Features
+
+- Handles generating per-system attributes
+- Extensible using the module system
+- Given package definitions, generates package and overlay outputs
+- Builds formatter outputs that can format multiple file types
+- Provides outputs/perSystem options for easy migration
+
+## Documentation
+
+See the [API docs](./api_guide.md) for available options and example usage.
+
+## Additional modules
+
+The following modules are also available:
+
+- [flakelight-rust](https://github.com/accelbread/flakelight-rust)
+- [flakelight-zig](https://github.com/accelbread/flakelight-zig)
+- [flakelight-elisp](https://github.com/accelbread/flakelight-elisp)
+
+## Examples
+
+### Shell
+
+The following is an example flake.nix for a devshell. It outputs
+`devShell.${system}.default` attributes for each configured system. Systems can
+be left unset to use the default.
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "nixpkgs/nixpkgs-unstable";
+    flakelight.url = "github:accelbread/flakelight";
+  };
+  outputs = { flakelight, ... }@inputs:
+    flakelight ./. {
+      inherit inputs;
+      systems = [ "x86_64-linux" "aarch64-linux" ];
+      devShell.packages = pkgs: [ pkgs.hello pkgs.coreutils ];
+    };
+}
+```
+
+With this flake, calling `nix develop` will make `hello` and `coreutils`
+available.
+
+### Rust package
+
+The following is an example flake for a Rust project using `flakelight-rust`.
+Package metadata is taken from the project's `Cargo.toml`.
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "nixpkgs/nixos-unstable";
+    flakelight.url = "github:accelbread/flakelight";
+    flakelight-rust.url = "github:accelbread/flakelight-rust";
+  };
+  outputs = { flakelight, flakelight-rust, ... }@inputs: flakelight ./. {
+    imports = [ flakelight-rust.flakelightModules.default ];
+    inherit inputs;
+  };
+}
+```
+
+This flake exports the following:
+
+- Per-system attributes for default systems (`x86_64-linux` and `aarch64-linux`)
+- `packages.${system}.default` attributes for each system
+- `overlays.default` providing an overlay with the package (built with the
+  applied pkg set's dependencies)
+- `devShells.${system}.default` that provides `rust-analyzer`, `cargo`, `clippy`,
+  `rustc`, and `rustfmt` as well as sets `RUST_SRC_PATH`
+- `checks.${system}.${check}` attributes for build, test, clippy, and formatting
+  checks
+- `formatter.${system}` with additional support for formatting Rust files.
+
+See [flakelight-rust.nix][flakelight-rust] to see how to configure it without the
+module.
+
+[flakelight-rust]: https://github.com/accelbread/flakelight-rust/blob/master/flakelight-rust.nix
+
+### C application
+
+The following example flake is for a C project with a simple `make` setup.
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "nixpkgs/nixos-unstable";
+    flakelight.url = "github:accelbread/flakelight";
+  };
+  outputs = { flakelight, ... }@inputs:
+    flakelight ./. {
+      inherit inputs;
+
+      description = "My C application.";
+      license = "AGPL-3.0-or-later";
+
+      package = { stdenv, defaultMeta }:
+        stdenv.mkDerivation {
+          name = "hello-world";
+          src = ./.;
+          installPhase = ''
+            runHook preInstall
+            make DESTDIR=$out install
+            runHook postInstall
+          '';
+          meta = defaultMeta;
+        };
+
+      devShell.packages = pkgs: with pkgs; [ clang-tools coreutils ];
+
+      formatters."*.c | *.h" = "clang-format -i";
+    };
+}
+```
+
+This flake exports the following:
+
+- Per-system attributes for default systems (`x86_64-linux` and `aarch64-linux`)
+- `packages.${system}.default` attributes for each system
+- `overlays.default` providing an overlay with the package (built with the
+  applied pkg set's dependencies)
+- `devShells.${system}.default` that provides `clang-tools` and `coreutils`.
+- `checks.${system}.${check}` attributes for build and formatting checks.
+- `formatter.${system}` with additional support for formatting `c` and `h` files
+  with `clang-format`.

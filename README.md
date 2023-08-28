@@ -68,7 +68,7 @@ Package metadata is taken from the project's `Cargo.toml`.
     flakelight.url = "github:accelbread/flakelight";
     flakelight-rust.url = "github:accelbread/flakelight-rust";
   };
-  outputs = { flakelight, flakelight-rust, ... }@inputs: flakelight ./. {
+  outputs = { flakelight, flakelight-rust, ... }: flakelight ./. {
     imports = [ flakelight-rust.flakelightModules.default ];
   };
 }

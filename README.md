@@ -6,9 +6,7 @@ A modular Nix flake framework for simplifying flake definitions.
 
 - Minimize boilerplate needed for flakes
 - Support straightforward configuration of all vanilla flake attributes
-- Be familiar to Nix users using flakes and nixpkgs
 - Allow sharing common configuration using modules
-- Make flakes simpler to read by moving complexity into the framework
 - What can be done automatically, should be
 - Provide good defaults, but let them be changed/disabled
 

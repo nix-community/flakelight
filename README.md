@@ -35,9 +35,9 @@ The following modules are also available:
 
 ### Shell
 
-The following is an example flake.nix for a devshell. It outputs
-`devShell.${system}.default` attributes for each configured system. Systems can
-be left unset to use the default.
+The following is an example flake.nix for a devshell, using the passed in
+nixpkgs. It outputs `devShell.${system}.default` attributes for each configured
+system. Systems can be left unset to use the default.
 
 ```nix
 {
@@ -65,13 +65,11 @@ Package metadata is taken from the project's `Cargo.toml`.
 ```nix
 {
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-unstable";
     flakelight.url = "github:accelbread/flakelight";
     flakelight-rust.url = "github:accelbread/flakelight-rust";
   };
   outputs = { flakelight, flakelight-rust, ... }@inputs: flakelight ./. {
     imports = [ flakelight-rust.flakelightModules.default ];
-    inherit inputs;
   };
 }
 ```
@@ -99,14 +97,9 @@ The following example flake is for a C project with a simple `make` setup.
 
 ```nix
 {
-  inputs = {
-    nixpkgs.url = "nixpkgs/nixos-unstable";
-    flakelight.url = "github:accelbread/flakelight";
-  };
-  outputs = { flakelight, ... }@inputs:
+  inputs.flakelight.url = "github:accelbread/flakelight";
+  outputs = { flakelight, ... }:
     flakelight ./. {
-      inherit inputs;
-
       description = "My C application.";
       license = "AGPL-3.0-or-later";
 
@@ -149,13 +142,9 @@ like the following. Most attributes can be autoloaded.
 
 ```nix
 {
-  inputs = {
-    nixpkgs.url = "nixpkgs/nixos-unstable";
-    flakelight.url = "github:accelbread/flakelight";
-  };
+  inputs.flakelight.url = "github:accelbread/flakelight";
   outputs = { flakelight, ... }@inputs:
     flakelight ./. {
-      inherit inputs;
       description = "My C application.";
       license = "AGPL-3.0-or-later";
 

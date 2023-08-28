@@ -32,15 +32,17 @@ in
       app = autoImport' "app";
       apps = autoImport' "apps";
       checks = autoImport' "checks";
+      template = autoImportArgs' "template";
+      templates = autoImportArgs' "templates";
+      formatters = autoImport' "formatters";
       nixosModule = autoImport' "nixosModule";
       nixosModules = autoImportArgs' "nixosModules";
       nixosConfigurations = autoImportArgs' [ "nixosConfigurations" "nixos" ];
       homeModule = autoImport' "homeModule";
       homeModules = autoImportArgs' "homeModules";
       homeConfigurations = autoImportArgs' [ "homeConfigurations" "home" ];
-      template = autoImportArgs' "template";
-      templates = autoImportArgs' "templates";
-      formatters = autoImport' "formatters";
+      flakelightModule = autoImport' "flakelightModule";
+      flakelightModules = autoImportArgs' "flakelightModules";
     in
     mkMerge [
       { _module.args = { inherit autoloadArgs; }; }
@@ -65,14 +67,16 @@ in
       (mkIf (app != null) { inherit app; })
       (mkIf (apps != null) { inherit apps; })
       (mkIf (checks != null) { inherit checks; })
+      (mkIf (template != null) { inherit template; })
+      (mkIf (templates != null) { inherit templates; })
+      (mkIf (formatters != null) { inherit formatters; })
       (mkIf (nixosModule != null) { inherit nixosModule; })
       (mkIf (nixosModules != null) { inherit nixosModules; })
       (mkIf (nixosConfigurations != null) { inherit nixosConfigurations; })
       (mkIf (homeModule != null) { inherit homeModule; })
       (mkIf (homeModules != null) { inherit homeModules; })
       (mkIf (homeConfigurations != null) { inherit homeConfigurations; })
-      (mkIf (template != null) { inherit template; })
-      (mkIf (templates != null) { inherit templates; })
-      (mkIf (formatters != null) { inherit formatters; })
+      (mkIf (flakelightModule != null) { inherit flakelightModule; })
+      (mkIf (flakelightModules != null) { inherit flakelightModules; })
     ];
 }

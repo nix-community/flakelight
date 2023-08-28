@@ -17,6 +17,7 @@ A modular Nix flake framework for simplifying flake definitions.
 - Handles generating per-system attributes
 - Extensible using the module system
 - Given package definitions, generates package and overlay outputs
+- Automatically import attributes from nix files in a directory (default `./nix`)
 - Builds formatter outputs that can format multiple file types
 - Provides outputs/perSystem options for easy migration
 
@@ -140,3 +141,45 @@ This flake exports the following:
 - `checks.${system}.${check}` attributes for build and formatting checks.
 - `formatter.${system}` with additional support for formatting `c` and `h` files
   with `clang-format`.
+
+### C application using autoloads
+
+The above example can instead use the autoload directory feature for the package
+like the following. Most attributes can be autoloaded.
+
+`./flake.nix`:
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "nixpkgs/nixos-unstable";
+    flakelight.url = "github:accelbread/flakelight";
+  };
+  outputs = { flakelight, ... }@inputs:
+    flakelight ./. {
+      inherit inputs;
+      description = "My C application.";
+      license = "AGPL-3.0-or-later";
+
+      devShell.packages = pkgs: with pkgs; [ clang-tools coreutils ];
+
+      formatters."*.c | *.h" = "clang-format -i";
+    };
+}
+```
+
+`./nix/packages/_default.nix`:
+
+```nix
+{ stdenv, defaultMeta }:
+stdenv.mkDerivation {
+  name = "hello-world";
+  src = ./.;
+  installPhase = ''
+    runHook preInstall
+    make DESTDIR=$out install
+    runHook postInstall
+  '';
+  meta = defaultMeta;
+}
+```

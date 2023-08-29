@@ -20,14 +20,15 @@ in
         PATH=${lib.makeBinPath (config.devShell.packages pkgs)}
         for f in "$@"; do
           if [ -d "$f" ]; then
-            ${fd}/bin/fd "$f" -Htf -x "$0"
+            ${fd}/bin/fd "$f" -Htf -x "$0" &
           else
             case "$(${coreutils}/bin/basename "$f")" in
               ${toString (mapAttrsToList
-                (n: v: "${n}) ${v} \"$f\";;") (config.formatters pkgs))}
+                (n: v: "${n}) ${v} \"$f\" & ;;") (config.formatters pkgs))}
             esac
           fi
         done &>/dev/null
+        wait
       '';
     };
 

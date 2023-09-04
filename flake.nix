@@ -9,5 +9,6 @@
     flakelight ./. {
       outputs = flakelight;
       templates = import ./templates;
+      checks.statix = pkgs: "${pkgs.statix}/bin/statix check";
     };
 }

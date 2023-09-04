@@ -22,7 +22,7 @@ in
 
   config.withOverlays = mkOrder 10 (final: prev:
     let
-      system = prev.stdenv.hostPlatform.system;
+      inherit (prev.stdenv.hostPlatform) system;
     in
     {
       inherit src inputs outputs flakelight system;

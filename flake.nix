@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: MIT
 
 {
+  description =
+    "A modular Nix flake framework for simplifying flake definitions";
   inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
   outputs = inputs:
     let flakelight = import ./. inputs; in

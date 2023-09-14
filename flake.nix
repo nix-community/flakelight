@@ -9,7 +9,7 @@
   outputs = { nixpkgs, ... }:
     let lib = import ./. nixpkgs; in
     lib.mkFlake ./. {
-      outputs = { inherit lib; };
+      inherit lib;
       functor = _: lib.mkFlake;
       templates = import ./templates;
       checks.statix = pkgs: "${pkgs.statix}/bin/statix check";

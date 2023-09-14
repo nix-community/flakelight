@@ -59,8 +59,18 @@ available.
 
 ### Rust package
 
-The following is an example flake for a Rust project using `flakelight-rust`.
+The following is an example flake for a Rust project using `flakelight-rust`,
+invoked by using `flakelight-rust`'s wrapper.
 Package metadata is taken from the project's `Cargo.toml`.
+
+```nix
+{
+  inputs.flakelight-rust.url = "github:accelbread/flakelight-rust";
+  outputs = { flakelight-rust, ... }: flakelight-rust ./. { };
+}
+```
+
+Alternatively, you can just use the `flakelight-rust` module as follows:
 
 ```nix
 {
@@ -74,7 +84,7 @@ Package metadata is taken from the project's `Cargo.toml`.
 }
 ```
 
-This flake exports the following:
+The above flakes export the following:
 
 - Per-system attributes for default systems (`x86_64-linux` and `aarch64-linux`)
 - `packages.${system}.default` attributes for each system

@@ -684,6 +684,25 @@ These can be paths, which is preferred as it results in better debug output:
 }
 ```
 
+### lib
+
+The `lib` option allows you to configure the flake's `lib` output.
+
+For example:
+
+```nix
+{
+  inputs.flakelight.url = "github:accelbread/flakelight";
+  outputs = { flakelight, ... }:
+    flakelight ./. {
+      lib = {
+        addFive = x: x + 5;
+        addFour = x: x + 4;
+      };
+    };
+}
+```
+
 ### functor
 
 The `functor` option allows you to make your flake callable.
@@ -759,6 +778,7 @@ The following options can be autoloaded with optional module args:
 - homeModules
 - homeConfigurations
 - flakelightModules
+- lib
 
 The following options can be autoloaded (no module args):
 

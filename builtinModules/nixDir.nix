@@ -43,6 +43,7 @@ in
       homeConfigurations = autoImportArgs' [ "homeConfigurations" "home" ];
       flakelightModule = autoImport' "flakelightModule";
       flakelightModules = autoImportArgs' "flakelightModules";
+      functor = autoImport' "functor";
     in
     mkMerge [
       { _module.args = { inherit autoloadArgs; }; }
@@ -78,5 +79,6 @@ in
       (mkIf (homeConfigurations != null) { inherit homeConfigurations; })
       (mkIf (flakelightModule != null) { inherit flakelightModule; })
       (mkIf (flakelightModules != null) { inherit flakelightModules; })
+      (mkIf (functor != null) { inherit functor; })
     ];
 }

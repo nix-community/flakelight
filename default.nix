@@ -2,14 +2,14 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-localInputs:
+nixpkgs:
 let
   inherit (builtins) isAttrs isPath readDir;
-  inherit (localInputs.nixpkgs.lib) attrNames composeManyExtensions
+  inherit (nixpkgs.lib) attrNames composeManyExtensions
     filter findFirst genAttrs getValues hasSuffix isFunction isList
     mapAttrsToList pathExists pipe removePrefix removeSuffix evalModules
     mkDefault mkOptionType singleton;
-  inherit (localInputs.nixpkgs.lib.types) coercedTo functionTo listOf;
+  inherit (nixpkgs.lib.types) coercedTo functionTo listOf;
 
   builtinModules = mapAttrsToList (k: _: ./builtinModules + ("/" + k))
     (readDir ./builtinModules);
@@ -17,7 +17,7 @@ let
   mkFlake = src: root: (evalModules {
     specialArgs.modulesPath = ./builtinModules;
     modules = builtinModules ++ [
-      { inputs.nixpkgs = mkDefault localInputs.nixpkgs; }
+      { inputs.nixpkgs = mkDefault nixpkgs; }
       { _module.args = { inherit src flakelight; }; }
       root
     ];
@@ -94,7 +94,4 @@ let
     let v = autoImport dir name; in
     if isFunction v then v args else v;
 in
-{
-  lib = flakelight;
-  __functor = _: mkFlake;
-}
+flakelight

@@ -684,6 +684,32 @@ These can be paths, which is preferred as it results in better debug output:
 }
 ```
 
+### functor
+
+The `functor` option allows you to make your flake callable.
+
+If it is set to a function, that function will be set as the `__functor`
+attribute of your flake outputs.
+
+Flakelight uses it so that calling your `flakelight` input calls
+`flakelight.lib.mkFlake`.
+
+As an example:
+
+```nix
+{
+  inputs.flakelight.url = "github:accelbread/flakelight";
+  outputs = { flakelight, ... }:
+    flakelight ./. {
+      outputs.testvalue = 5;
+      functor = self: x: x + self.testvalue;
+    }
+}
+```
+
+With the above flake, another flake that has imports it with the name `addFive`
+would be able to call `addFive 4` to get 9.
+
 ### meta
 
 The following options are available for configuring the meta attributes of the
@@ -746,6 +772,7 @@ The following options can be autoloaded (no module args):
 - nixosModule
 - homeModule
 - flakelightModule
+- functor
 
 ### flakelight
 

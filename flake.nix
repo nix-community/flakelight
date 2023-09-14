@@ -6,10 +6,11 @@
   description =
     "A modular Nix flake framework for simplifying flake definitions";
   inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
-  outputs = inputs:
-    let flakelight = import ./. inputs; in
-    flakelight ./. {
-      outputs = flakelight;
+  outputs = { nixpkgs, ... }:
+    let lib = import ./. nixpkgs; in
+    lib.mkFlake ./. {
+      outputs = { inherit lib; };
+      functor = _: lib.mkFlake;
       templates = import ./templates;
       checks.statix = pkgs: "${pkgs.statix}/bin/statix check";
     };

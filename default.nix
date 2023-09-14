@@ -6,7 +6,7 @@ nixpkgs:
 let
   inherit (builtins) isAttrs isPath readDir;
   inherit (nixpkgs.lib) attrNames composeManyExtensions
-    filter findFirst genAttrs getValues hasSuffix isFunction isList
+    filter findFirst fix genAttrs getValues hasSuffix isFunction isList
     mapAttrsToList pathExists pipe removePrefix removeSuffix evalModules
     mkDefault mkOptionType singleton;
   inherit (nixpkgs.lib.types) coercedTo functionTo listOf;
@@ -14,14 +14,23 @@ let
   builtinModules = mapAttrsToList (k: _: ./builtinModules + ("/" + k))
     (readDir ./builtinModules);
 
-  mkFlake = src: root: (evalModules {
-    specialArgs.modulesPath = ./builtinModules;
-    modules = builtinModules ++ [
-      { inputs.nixpkgs = mkDefault nixpkgs; }
-      { _module.args = { inherit src flakelight; }; }
-      root
-    ];
-  }).config.outputs;
+  mkFlake = {
+    __functor = self: src: root: (evalModules {
+      specialArgs.modulesPath = ./builtinModules;
+      modules = builtinModules ++ self.extraModules ++ [
+        { inputs.nixpkgs = mkDefault nixpkgs; }
+        { _module.args = { inherit src flakelight; }; }
+        root
+      ];
+    }).config.outputs;
+
+    # Attributes to allow module flakes to extend mkFlake
+    extraModules = [ ];
+    extend = (fix (extend': mkFlake': modules: fix (self: mkFlake' // {
+      extraModules = mkFlake'.extraModules ++ modules;
+      extend = extend' self;
+    }))) mkFlake;
+  };
 
   flakelight = {
     inherit mkFlake supportedSystem autoImport autoImportArgs;

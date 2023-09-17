@@ -587,9 +587,9 @@ By default, `nix` files are formatted with `nixpkgs-fmt` and `md`, `json`, and
 To disable default formatters, set the `flakelight.builtinFormatters` option to
 false.
 
-You can set `formatters` to an attribute set, for which the keys are a bash case
-pattern and the value is the formatting command. `formatters` can optionally be
-a function that takes packages and returns the above.
+You can set `formatters` to an attribute set, for which the keys are a file name
+pattern and the value is the corresponding formatting command. `formatters` can
+optionally be a function that takes packages and returns the above.
 
 Formatting tools should be added to `devShell.packages` and all packages in
 `devShell.packages` will be available for formatting commands.

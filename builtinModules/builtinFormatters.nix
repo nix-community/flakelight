@@ -18,7 +18,9 @@ in
 
     formatters = {
       "*.nix" = "nixpkgs-fmt";
-      "*.md | *.json | *.yml" = "prettier --write";
+      "*.md" = "prettier --write";
+      "*.json" = "prettier --write";
+      "*.yml" = "prettier --write";
     };
   };
 }

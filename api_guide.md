@@ -527,7 +527,7 @@ For example:
   outputs = { flakelight, ... }:
     flakelight ./. {
       apps = {
-        shell = "/bin/sh"
+        shell = "/bin/sh";
         emacs = pkgs: "${pkgs.emacs}/bin/emacs";
         bash = pkgs: { type = "app"; program = "${pkgs.bash}/bin/bash"; };
       };
@@ -543,7 +543,7 @@ Alternatively, the above can be written as:
   outputs = { flakelight, ... }:
     flakelight ./. {
       apps = { emacs, bash, ... }: {
-        shell = "/bin/sh"
+        shell = "/bin/sh";
         emacs = "${emacs}/bin/emacs";
         bash = { type = "app"; program = "${bash}/bin/bash"; };
       };

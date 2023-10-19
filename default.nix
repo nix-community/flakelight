@@ -10,6 +10,7 @@ let
     mapAttrsToList pathExists pipe removePrefix removeSuffix evalModules
     mkDefault mkOptionType singleton;
   inherit (nixpkgs.lib.types) coercedTo functionTo listOf;
+  inherit (nixpkgs.lib.options) mergeEqualOption mergeOneOption;
 
   builtinModules = mapAttrsToList (k: _: ./builtinModules + ("/" + k))
     (readDir ./builtinModules);
@@ -49,6 +50,7 @@ let
         description = "package definition";
         descriptionClass = "noun";
         check = isFunction;
+        merge = mergeOneOption;
       };
 
       path = mkOptionType {
@@ -56,6 +58,7 @@ let
         description = "path";
         descriptionClass = "noun";
         check = isPath;
+        merge = mergeEqualOption;
       };
 
       module = mkOptionType {

@@ -7,6 +7,7 @@ let
   inherit (builtins) isPath isString;
   inherit (lib) mkOption mkOptionType mkIf mkMerge;
   inherit (lib.types) lazyAttrsOf nullOr;
+  inherit (lib.options) mergeEqualOption;
 
   template = mkOptionType {
     name = "template";
@@ -15,6 +16,7 @@ let
     check = x: (x ? path) && (isPath x.path) &&
       (x ? description) && (isString x.description) &&
       ((! x ? welcomeText) || (isString x.welcomeText));
+    merge = mergeEqualOption;
   };
 in
 {

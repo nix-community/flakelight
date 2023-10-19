@@ -4,8 +4,8 @@
 
 { config, lib, flakelight, ... }:
 let
-  inherit (lib) any attrValues filterAttrs mapAttrs mkIf mkMerge mkOption
-    optionalAttrs;
+  inherit (lib) any attrValues filterAttrs mapAttrs mkDefault mkIf mkMerge
+    mkOption optionalAttrs;
   inherit (lib.types) lazyAttrsOf functionTo lines listOf nullOr package str;
   inherit (flakelight) supportedSystem;
   inherit (flakelight.types) optFunctionTo packageDef;
@@ -45,7 +45,7 @@ in
 
   config = mkMerge [
     (mkIf (any (x: x != null) (attrValues config.devShell)) {
-      devShells.default = { pkgs, mkShell }: mkShell (
+      devShells.default = mkDefault ({ pkgs, mkShell }: mkShell (
         optionalAttrs (config.devShell.env != null)
           (config.devShell.env pkgs)
         // optionalAttrs (config.devShell.inputsFrom != null) {
@@ -57,7 +57,7 @@ in
         // optionalAttrs (config.devShell.shellHook != null) {
           shellHook = config.devShell.shellHook pkgs;
         }
-      );
+      ));
     })
 
     (mkIf (config.devShells != { }) {

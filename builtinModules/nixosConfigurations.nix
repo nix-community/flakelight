@@ -2,12 +2,13 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, ... }:
+{ config, lib, flakelight, autoloadArgs, ... }:
 let
-  inherit (builtins) isAttrs;
+  inherit (builtins) isAttrs mapAttrs;
   inherit (lib) foldl mapAttrsToList mergeOneOption mkIf mkOption mkOptionType
     recursiveUpdate;
   inherit (lib.types) lazyAttrsOf;
+  inherit (flakelight.types) optFunctionTo;
 
   nixosConfiguration = mkOptionType {
     name = "nixosConfiguration";
@@ -21,17 +22,18 @@ let
 in
 {
   options.nixosConfigurations = mkOption {
-    type = lazyAttrsOf nixosConfiguration;
+    type = lazyAttrsOf (optFunctionTo nixosConfiguration);
     default = { };
   };
 
   config.outputs = mkIf (config.nixosConfigurations != { }) {
-    inherit (config) nixosConfigurations;
+    nixosConfigurations = mapAttrs (_: f: f autoloadArgs)
+      config.nixosConfigurations;
     checks = foldl recursiveUpdate { } (mapAttrsToList
       (n: v: {
         ${v.config.nixpkgs.system}."nixos-${n}" =
           v.config.system.build.toplevel;
       })
-      config.nixosConfigurations);
+      (mapAttrs (_: f: f autoloadArgs) config.nixosConfigurations));
   };
 }

@@ -2,12 +2,13 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, ... }:
+{ config, lib, flakelight, autoloadArgs, ... }:
 let
-  inherit (builtins) isAttrs;
+  inherit (builtins) isAttrs mapAttrs;
   inherit (lib) foldl mapAttrsToList mergeOneOption mkOption mkOptionType mkIf
     recursiveUpdate;
   inherit (lib.types) lazyAttrsOf;
+  inherit (flakelight.types) optFunctionTo;
 
   homeConfiguration = mkOptionType {
     name = "homeConfiguration";
@@ -19,16 +20,17 @@ let
 in
 {
   options.homeConfigurations = mkOption {
-    type = lazyAttrsOf homeConfiguration;
+    type = lazyAttrsOf (optFunctionTo homeConfiguration);
     default = { };
   };
 
   config.outputs = mkIf (config.homeConfigurations != { }) {
-    inherit (config) homeConfigurations;
+    homeConfigurations = mapAttrs (_: f: f autoloadArgs)
+      config.homeConfigurations;
     checks = foldl recursiveUpdate { } (mapAttrsToList
       (n: v: {
         ${v.config.nixpkgs.system}."home-${n}" = v.activationPackage;
       })
-      config.homeConfigurations);
+      (mapAttrs (_: f: f autoloadArgs) config.homeConfigurations));
   };
 }

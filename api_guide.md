@@ -617,6 +617,10 @@ outputs for NixOS systems and home-manager users.
 
 They should be set to an attribute set of respective configurations.
 
+Alternatively, the configurations can be functions, in which case those
+functions will be passed `autoloadArgs` and must return a standard
+configuration (this is useful when using autoloads with the `nixDir` feature).
+
 For example:
 
 ```nix
@@ -641,6 +645,20 @@ For example:
     flakelight ./. {
       homeConfigurations.user = home-manager.lib.homeManagerConfiguration {
         # homeManagerConfiguration arguments
+      };
+    };
+}
+```
+
+Optionally, defining as a function:
+
+```nix
+{
+  inputs.flakelight.url = "github:accelbread/flakelight";
+  outputs = { flakelight, ... }:
+    flakelight ./. {
+      nixosConfigurations.system = { lib, ... }: lib.nixosSystem {
+        # nixosSystem arguments
       };
     };
 }

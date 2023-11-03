@@ -45,6 +45,7 @@ in
       flakelightModules = autoImportArgs' "flakelightModules";
       lib = autoImportArgs' "lib";
       functor = autoImport' "functor";
+      bundlers = autoImportArgs' "bundlers";
     in
     mkMerge [
       { _module.args = { inherit autoloadArgs; }; }
@@ -82,5 +83,6 @@ in
       (mkIf (flakelightModules != null) { inherit flakelightModules; })
       (mkIf (lib != null) { inherit lib; })
       (mkIf (functor != null) { inherit functor; })
+      (mkIf (bundlers != null) { inherit bundlers; })
     ];
 }

@@ -610,6 +610,42 @@ For example, to set Rust and Zig formatters:
 }
 ```
 
+### bundlers
+
+The `bundler` and `bundlers` options allow you to set `bundlers.${system}`
+outputs.
+
+`bundlers` is an attribute set of bundler functions or a function that takes
+packages and returns an attribute set of bundler functions.
+
+`bundler` sets `bundlers.default`.
+
+For example, a bundler that returns the passed package:
+
+```nix
+{
+  inputs.flakelight.url = "github:accelbread/flakelight";
+  outputs = { flakelight, ... }:
+    flakelight ./. {
+      bundler = x: x;
+    };
+}
+```
+
+As another example, a bundler that always returns `hello`:
+
+```nix
+{
+  inputs.flakelight.url = "github:accelbread/flakelight";
+  outputs = { flakelight, ... }:
+    flakelight ./. {
+      bundlers = { hello, ... }: {
+        default = x: hello;
+      };
+    };
+}
+```
+
 ### nixosConfigurations and homeConfigurations
 
 The `nixosConfigurations` and `homeConfigurations` attributes let you set

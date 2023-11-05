@@ -35,6 +35,8 @@ in
       template = autoImportArgs' "template";
       templates = autoImportArgs' "templates";
       formatters = autoImport' "formatters";
+      bundler = autoImport' "bundler";
+      bundlers = autoImport' "bundlers";
       nixosModule = autoImport' "nixosModule";
       nixosModules = autoImportArgs' "nixosModules";
       nixosConfigurations = autoImportArgs' [ "nixosConfigurations" "nixos" ];
@@ -72,6 +74,8 @@ in
       (mkIf (template != null) { inherit template; })
       (mkIf (templates != null) { inherit templates; })
       (mkIf (formatters != null) { inherit formatters; })
+      (mkIf (bundler != null) { inherit bundler; })
+      (mkIf (bundlers != null) { inherit bundlers; })
       (mkIf (nixosModule != null) { inherit nixosModule; })
       (mkIf (nixosModules != null) { inherit nixosModules; })
       (mkIf (nixosConfigurations != null) { inherit nixosConfigurations; })

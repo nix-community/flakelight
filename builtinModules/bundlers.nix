@@ -4,21 +4,22 @@
 
 { config, lib, flakelight, ... }:
 let
-  inherit (lib) mkMerge mkOption mkIf;
-  inherit (lib.types) functionTo lazyAttrsOf nullOr package uniq;
-  inherit (flakelight.types) optFunctionTo;
+  inherit (lib) isFunction mapAttrs mkMerge mkOption mkIf;
+  inherit (lib.types) lazyAttrsOf nullOr;
+  inherit (flakelight.types) function optFunctionTo;
 
-  bundler = uniq (functionTo package);
+  wrapBundler = pkgs: bundler: drv:
+    if isFunction (bundler (pkgs // drv)) then bundler pkgs drv else bundler drv;
 in
 {
   options = {
     bundler = mkOption {
-      type = nullOr bundler;
+      type = nullOr function;
       default = null;
     };
 
     bundlers = mkOption {
-      type = nullOr (optFunctionTo (lazyAttrsOf bundler));
+      type = nullOr (optFunctionTo (lazyAttrsOf function));
       default = { };
     };
   };
@@ -30,7 +31,7 @@ in
 
     (mkIf (config.bundlers != null) {
       perSystem = pkgs: {
-        bundlers = config.bundlers pkgs;
+        bundlers = mapAttrs (_: wrapBundler pkgs) (config.bundlers pkgs);
       };
     })
   ];

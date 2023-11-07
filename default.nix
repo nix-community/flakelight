@@ -61,6 +61,14 @@ let
         merge = mergeEqualOption;
       };
 
+      function = mkOptionType {
+        name = "function";
+        description = "function";
+        descriptionClass = "noun";
+        check = isFunction;
+        merge = mergeOneOption;
+      };
+
       module = mkOptionType {
         name = "module";
         description = "module";

@@ -20,7 +20,7 @@ in
 
     bundlers = mkOption {
       type = nullOr (optFunctionTo (lazyAttrsOf function));
-      default = { };
+      default = null;
     };
   };
 

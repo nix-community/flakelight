@@ -2,15 +2,15 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ lib, ... }:
+{ config, lib, ... }:
 let
-  inherit (lib) mkEnableOption;
+  inherit (lib) mkEnableOption mkIf;
 in
 {
   options.flakelight.builtinFormatters =
     mkEnableOption "default formatters" // { default = true; };
 
-  config = {
+  config = mkIf config.flakelight.builtinFormatters {
     devShell.packages = pkgs: [
       pkgs.nixpkgs-fmt
       pkgs.nodePackages.prettier

@@ -8,7 +8,8 @@ let
 in
 {
   options.flakelight.builtinFormatters =
-    mkEnableOption "default formatters" // { default = true; };
+    mkEnableOption "default formatters" //
+    { default = config.formatter == null; };
 
   config = mkIf config.flakelight.builtinFormatters {
     devShell.packages = pkgs: [

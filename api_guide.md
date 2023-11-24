@@ -577,6 +577,11 @@ For example:
 
 ### formatters
 
+The `formatter` option allows you to set `formatter.${system}` outputs. It can
+be set to a function that takes packages and returns the package to use. This
+overrides the `formatters` functionality described below though, so for
+configuring formatters for a file type, you likely want to use `formatters`.
+
 The `formatters` option allows you to configure formatting tools that will be
 used by `nix fmt`. If formatters are set, Flakelight will export
 `formatter.${system}` outputs which apply all the configured formatters.

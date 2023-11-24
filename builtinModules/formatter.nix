@@ -4,38 +4,54 @@
 
 { config, src, lib, flakelight, ... }:
 let
-  inherit (lib) mkOption mkIf mapAttrsToList;
-  inherit (lib.types) lazyAttrsOf nullOr str;
+  inherit (lib) mkDefault mkMerge mkOption mkIf mapAttrsToList;
+  inherit (lib.types) lazyAttrsOf nullOr package str;
   inherit (flakelight.types) optFunctionTo;
 in
 {
-  options.formatters = mkOption {
-    type = nullOr (optFunctionTo (lazyAttrsOf str));
-    default = null;
-  };
-
-  config = mkIf (config.formatters != null) {
-    perSystem = { pkgs, lib, fd, coreutils, ... }: {
-      formatter = pkgs.writeShellScriptBin "formatter" ''
-        PATH=${lib.makeBinPath (config.devShell.packages pkgs)}
-        for f in "$@"; do
-          if [ -d "$f" ]; then
-            ${fd}/bin/fd "$f" -Htf -x "$0" &
-          else
-            case "$(${coreutils}/bin/basename "$f")" in
-              ${toString (mapAttrsToList
-                (n: v: "${n}) ${v} \"$f\" & ;;") (config.formatters pkgs))}
-            esac
-          fi
-        done &>/dev/null
-        wait
-      '';
+  options = {
+    formatter = mkOption {
+      type = nullOr (optFunctionTo package);
+      default = null;
     };
-
-    checks.formatting = { lib, outputs', diffutils, ... }: ''
-      ${lib.getExe outputs'.formatter} .
-      ${diffutils}/bin/diff -qr ${src} . |\
-        sed 's/Files .* and \(.*\) differ/File \1 not formatted/g'
-    '';
+    formatters = mkOption {
+      type = nullOr (optFunctionTo (lazyAttrsOf str));
+      default = null;
+    };
   };
+
+  config = mkMerge [
+    (mkIf (config.formatter != null) {
+      perSystem = pkgs: {
+        formatter = config.formatter pkgs;
+      };
+    })
+
+    (mkIf (config.formatters != null) {
+      perSystem = { pkgs, lib, fd, coreutils, ... }: {
+        formatter = mkDefault (pkgs.writeShellScriptBin "formatter" ''
+          PATH=${lib.makeBinPath (config.devShell.packages pkgs)}
+          for f in "$@"; do
+            if [ -d "$f" ]; then
+              ${fd}/bin/fd "$f" -Htf -x "$0" &
+            else
+              case "$(${coreutils}/bin/basename "$f")" in
+                ${toString (mapAttrsToList
+                  (n: v: "${n}) ${v} \"$f\" & ;;") (config.formatters pkgs))}
+              esac
+            fi
+          done &>/dev/null
+          wait
+        '');
+      };
+    })
+
+    (mkIf ((config.formatters != null) || (config.formatter != null)) {
+      checks.formatting = { lib, outputs', diffutils, ... }: ''
+        ${lib.getExe outputs'.formatter} .
+        ${diffutils}/bin/diff -qr ${src} . |\
+          sed 's/Files .* and \(.*\) differ/File \1 not formatted/g'
+      '';
+    })
+  ];
 }

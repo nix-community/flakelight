@@ -284,6 +284,7 @@ in
           echo Welcome to example shell!
         '';
         env.TEST_VAR = "test value";
+        stdenv = pkgs: pkgs.clangStdenv;
       };
     })
     (f: lib.isDerivation f.devShells.x86_64-linux.default);

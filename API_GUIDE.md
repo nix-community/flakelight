@@ -368,6 +368,9 @@ access packages.
 attribute set mapping variables to values. It can optionally be a function to
 such an attribute set in order to access packages.
 
+`devShell.stdenv` allows changing the stdenv used for the shell. It is a
+function that takes the package set and returns the stdenv to use.
+
 For example, these can be configured as follows:
 
 ```nix
@@ -386,6 +389,7 @@ For example, these can be configured as follows:
         '';
         # Set an environment var. `env` can be an be a function
         env.TEST_VAR = "test value";
+        stdenv = pkgs: pkgs.clangStdenv;
       };
     };
 }

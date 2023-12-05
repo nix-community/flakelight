@@ -35,6 +35,11 @@ in
           (optFunctionTo (lazyAttrsOf str));
         default = null;
       };
+
+      stdenv = mkOption {
+        type = nullOr (functionTo package);
+        default = null;
+      };
     };
 
     devShells = mkOption {
@@ -45,19 +50,22 @@ in
 
   config = mkMerge [
     (mkIf (any (x: x != null) (attrValues config.devShell)) {
-      devShells.default = mkDefault ({ pkgs, mkShell }: mkShell (
-        optionalAttrs (config.devShell.env != null)
-          (config.devShell.env pkgs)
-        // optionalAttrs (config.devShell.inputsFrom != null) {
-          inputsFrom = config.devShell.inputsFrom pkgs;
-        }
-        // optionalAttrs (config.devShell.packages != null) {
-          packages = config.devShell.packages pkgs;
-        }
-        // optionalAttrs (config.devShell.shellHook != null) {
-          shellHook = config.devShell.shellHook pkgs;
-        }
-      ));
+      devShells.default = mkDefault ({ pkgs, mkShell }: mkShell.override
+        (if config.devShell.stdenv == null then { }
+        else { stdenv = config.devShell.stdenv pkgs; })
+        (
+          optionalAttrs (config.devShell.env != null)
+            (config.devShell.env pkgs)
+          // optionalAttrs (config.devShell.inputsFrom != null) {
+            inputsFrom = config.devShell.inputsFrom pkgs;
+          }
+          // optionalAttrs (config.devShell.packages != null) {
+            packages = config.devShell.packages pkgs;
+          }
+          // optionalAttrs (config.devShell.shellHook != null) {
+            shellHook = config.devShell.shellHook pkgs;
+          }
+        ));
     })
 
     (mkIf (config.devShells != { }) {

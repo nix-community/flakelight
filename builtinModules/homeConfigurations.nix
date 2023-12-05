@@ -17,6 +17,8 @@ let
     check = x: isAttrs x && x ? activationPackage;
     merge = mergeOneOption;
   };
+
+  configs = mapAttrs (_: f: f autoloadArgs) config.homeConfigurations;
 in
 {
   options.homeConfigurations = mkOption {
@@ -25,12 +27,11 @@ in
   };
 
   config.outputs = mkIf (config.homeConfigurations != { }) {
-    homeConfigurations = mapAttrs (_: f: f autoloadArgs)
-      config.homeConfigurations;
+    homeConfigurations = configs;
     checks = foldl recursiveUpdate { } (mapAttrsToList
       (n: v: {
         ${v.config.nixpkgs.system}."home-${n}" = v.activationPackage;
       })
-      (mapAttrs (_: f: f autoloadArgs) config.homeConfigurations));
+      configs);
   };
 }

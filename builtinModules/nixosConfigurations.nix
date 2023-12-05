@@ -19,6 +19,8 @@ let
       && x ? config.system.build.toplevel;
     merge = mergeOneOption;
   };
+
+  configs = mapAttrs (_: f: f autoloadArgs) config.nixosConfigurations;
 in
 {
   options.nixosConfigurations = mkOption {
@@ -27,13 +29,12 @@ in
   };
 
   config.outputs = mkIf (config.nixosConfigurations != { }) {
-    nixosConfigurations = mapAttrs (_: f: f autoloadArgs)
-      config.nixosConfigurations;
+    nixosConfigurations = configs;
     checks = foldl recursiveUpdate { } (mapAttrsToList
       (n: v: {
         ${v.config.nixpkgs.system}."nixos-${n}" =
           v.config.system.build.toplevel;
       })
-      (mapAttrs (_: f: f autoloadArgs) config.nixosConfigurations));
+      configs);
   };
 }

@@ -32,8 +32,9 @@ in
     nixosConfigurations = configs;
     checks = foldl recursiveUpdate { } (mapAttrsToList
       (n: v: {
-        ${v.config.nixpkgs.system}."nixos-${n}" =
-          v.config.system.build.toplevel;
+        ${v.config.nixpkgs.system}."nixos-${n}" = v.pkgs.runCommand
+          "check-nixos-${n}"
+          { } "echo ${v.config.system.build.toplevel} > $out";
       })
       configs);
   };

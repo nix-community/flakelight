@@ -179,7 +179,7 @@ To add a `example.test` output to your flake you could do the following:
 }
 ```
 
-With the above, `nix eval .#example.test` will ouput "hello".
+With the above, `nix eval .#example.test` will output "hello".
 
 This can be used to configure any output, for example directly setting an
 overlay (though this can be configured with the `overlays` option):
@@ -215,7 +215,7 @@ following:
 }
 ```
 
-The above, with default systems, will generate `example.x86-64_linux.test` and
+The above, with default systems, will generate `example.x86_64-linux.test` and
 `example.aarch64-linux.test` attributes.
 
 ### nixpkgs.config
@@ -308,6 +308,8 @@ To set the default package, you can set the options as follows:
 The above will export `packages.${system}.default` attributes, add `pkg1` to
 `overlays.default`, and export `checks.${system}.packages-default`.
 
+You can also instead just directly set `packages.default`.
+
 To set multiple packages, you can set the options as follows:
 
 ```nix
@@ -322,26 +324,23 @@ To set multiple packages, you can set the options as follows:
             src = ./.;
             installPhase = "make DESTDIR=$out install";
           };
-        pkg2 = { stdenv, pkg1, pkg3 }: {
+        pkg2 = { stdenv, pkg1, pkg3 }:
           stdenv.mkDerivation {
             name = "hello-world";
             src = ./pkg2;
             nativeBuildInputs = [ pkg1 pkg3 ];
             installPhase = "make DESTDIR=$out install";
           };
-        pkg3 = { stdenv }: {
+        pkg3 = { stdenv }:
           stdenv.mkDerivation {
             name = "hello-world";
             src = ./pkg3;
             installPhase = "make DESTDIR=$out install";
           };
-        };
       };
     };
 }
 ```
-
-You can also instead just directly set `packages.default`
 
 The above will export `packages.${system}.default`, `packages.${system}.pkg2`,
 `packages.${system}.pkg3` attributes, add `pkg1`, `pkg2`, and `pkg3` to
@@ -553,7 +552,7 @@ Alternatively, the above can be written as:
 
 ### templates
 
-The `template` and `templates` options allow you to set `templates.${system}`
+The `template` and `templates` options allow you to set `templates`
 outputs.
 
 `templates` is an attribute set to template values.
@@ -575,12 +574,29 @@ For example:
 }
 ```
 
-### formatters
+### formatter
 
 The `formatter` option allows you to set `formatter.${system}` outputs. It can
 be set to a function that takes packages and returns the package to use. This
 overrides the `formatters` functionality described below though, so for
-configuring formatters for a file type, you likely want to use `formatters`.
+configuring formatters for a file type, you likely want to use `formatters`
+instead.
+
+For example, to use a custom formatting command:
+
+```nix
+{
+  inputs.flakelight.url = "github:accelbread/flakelight";
+  outputs = { flakelight, ... }:
+    flakelight ./. {
+      formatter = pkgs: pkgs.writeShellScriptBin "format-script" ''
+        # Perform formatting (`nix fmt` calls the script with `.` as arg)
+      '';
+    };
+}
+```
+
+### formatters
 
 The `formatters` option allows you to configure formatting tools that will be
 used by `nix fmt`. If formatters are set, Flakelight will export
@@ -620,8 +636,11 @@ For example, to set Rust and Zig formatters:
 The `bundler` and `bundlers` options allow you to set `bundlers.${system}`
 outputs.
 
-`bundlers` is an attribute set of bundler functions or a function that takes
-packages and returns an attribute set of bundler functions.
+Each bundler value can be either a bundler function or a function that takes the
+package set and returns a bundler function.
+
+`bundlers` is an attribute set of bundler values or a function that takes
+packages and returns an attribute set of bundler values.
 
 `bundler` sets `bundlers.default`.
 
@@ -645,10 +664,17 @@ As another example, a bundler that always returns `hello`:
   outputs = { flakelight, ... }:
     flakelight ./. {
       bundlers = { hello, ... }: {
-        default = x: hello;
+        hello = x: hello;
       };
     };
 }
+```
+
+To write the above using autoloads, can use the following:
+
+```nix
+# nix/bundlers/hello.nix
+{ hello, ... }: x: hello;
 ```
 
 ### nixosConfigurations and homeConfigurations

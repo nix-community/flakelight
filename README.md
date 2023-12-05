@@ -21,7 +21,7 @@ A modular Nix flake framework for simplifying flake definitions.
 
 ## Documentation
 
-See the [API docs](./api_guide.md) for available options and example usage.
+See the [API docs](./API_GUIDE.md) for available options and example usage.
 
 ## Additional modules
 

@@ -6,12 +6,16 @@
 let
   inherit (lib) isList mkOption mkOrder mapAttrs optionalAttrs;
   inherit (lib.types) listOf nullOr oneOf str;
+  inherit (builtins) pathExists;
 in
 {
   options = {
     description = mkOption {
       type = nullOr str;
-      default = null;
+      default =
+        if pathExists (src + /flake.nix)
+        then (import (src + /flake.nix)).description or null
+        else null;
     };
 
     license = mkOption {

@@ -30,7 +30,7 @@ in
     (mkIf (config.formatters != null) {
       perSystem = { pkgs, lib, fd, coreutils, ... }: {
         formatter = mkDefault (pkgs.writeShellScriptBin "formatter" ''
-          PATH=${lib.makeBinPath (config.devShell.packages pkgs)}
+          PATH=${lib.makeBinPath ((config.devShell.packages or (_: [ ])) pkgs)}
           for f in "$@"; do
             if [ -d "$f" ]; then
               ${fd}/bin/fd "$f" -Htf -x "$0" &

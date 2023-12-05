@@ -509,7 +509,16 @@ in
   formatters-fn = test
     (flakelight ./empty {
       formatters = { rustfmt, ... }: {
-        "*.rs" = "rustfmt";
+        "*.rs" = "${rustfmt}";
+      };
+    })
+    (f: lib.isDerivation f.formatter.x86_64-linux);
+
+  formatters-no-devshell = test
+    (flakelight ./empty {
+      devShell = lib.mkForce null;
+      formatters = { rustfmt, ... }: {
+        "*.rs" = "${rustfmt}";
       };
     })
     (f: lib.isDerivation f.formatter.x86_64-linux);

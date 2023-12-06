@@ -825,7 +825,8 @@ default package for supported modules (such as flakelight-rust or
 flakelight-zig) or for use in your own packages through the `defaultMeta` pkgs
 value.
 
-`description` allows setting the package description.
+`description` allows setting the package description. By default it uses the
+flake description, if found.
 
 `license` lets you set the license or license. It may be a single string or list
 of strings. These strings may be Spdx license identifiers or nixpkgs license

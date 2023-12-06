@@ -1,0 +1,25 @@
+name: Update flake inputs
+
+on:
+  schedule:
+    - cron: "0 12 ? * MON"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-inputs:
+    name: Update inputs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@master
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - run: nix flake update --commit-lock-file
+      - run: nix flake check --all-systems
+      - run: nix eval .#tests
+      - run: git push

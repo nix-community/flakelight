@@ -17,12 +17,17 @@ in
       pkgs.nodePackages.prettier
     ];
 
-    formatters = {
-      "*.nix" = "nixpkgs-fmt";
-      "*.md" = "prettier --write";
-      "*.json" = "prettier --write";
-      "*.yaml" = "prettier --write";
-      "*.yml" = "prettier --write";
-    };
+    formatters = pkgs:
+      let
+        nixpkgs-fmt = "${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt";
+        prettier = "${pkgs.nodePackages.prettier}/bin/prettier --write";
+      in
+      {
+        "*.nix" = nixpkgs-fmt;
+        "*.md" = prettier;
+        "*.json" = prettier;
+        "*.yaml" = prettier;
+        "*.yml" = prettier;
+      };
   };
 }

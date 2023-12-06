@@ -37,7 +37,22 @@ The following modules are also available:
 
 The following is an example flake.nix for a devshell, using the passed in
 nixpkgs. It outputs `devShell.${system}.default` attributes for each configured
-system. Systems can be left unset to use the default.
+system. `systems` can be set to change configured systems from the default.
+
+```nix
+{
+  inputs.flakelight.url = "github:accelbread/flakelight";
+  outputs = { flakelight, ... }
+    flakelight ./. {
+      devShell.packages = pkgs: [ pkgs.hello pkgs.coreutils ];
+    };
+}
+```
+
+With this flake, calling `nix develop` will make `hello` and `coreutils`
+available.
+
+To use a different nixpkgs, you can instead use:
 
 ```nix
 {
@@ -48,14 +63,10 @@ system. Systems can be left unset to use the default.
   outputs = { flakelight, ... }@inputs:
     flakelight ./. {
       inherit inputs;
-      systems = [ "x86_64-linux" "aarch64-linux" ];
       devShell.packages = pkgs: [ pkgs.hello pkgs.coreutils ];
     };
 }
 ```
-
-With this flake, calling `nix develop` will make `hello` and `coreutils`
-available.
 
 ### Rust package
 
@@ -70,7 +81,19 @@ Package metadata is taken from the project's `Cargo.toml`.
 }
 ```
 
-Alternatively, you can just use the `flakelight-rust` module as follows:
+The above flake exports the following:
+
+- Per-system attributes for default systems (`x86_64-linux` and `aarch64-linux`)
+- `packages.${system}.default` attributes for each system
+- `overlays.default` providing an overlay with the package (built with the
+  applied pkg set's dependencies)
+- `devShells.${system}.default` that provides `rust-analyzer`, `cargo`, `clippy`,
+  `rustc`, and `rustfmt` as well as sets `RUST_SRC_PATH`
+- `checks.${system}.${check}` attributes for build, test, clippy, and formatting
+  checks
+- `formatter.${system}` with additional support for formatting Rust files
+
+Equivalently, you can just import the `flakelight-rust` module as follows:
 
 ```nix
 {
@@ -84,20 +107,8 @@ Alternatively, you can just use the `flakelight-rust` module as follows:
 }
 ```
 
-The above flakes export the following:
-
-- Per-system attributes for default systems (`x86_64-linux` and `aarch64-linux`)
-- `packages.${system}.default` attributes for each system
-- `overlays.default` providing an overlay with the package (built with the
-  applied pkg set's dependencies)
-- `devShells.${system}.default` that provides `rust-analyzer`, `cargo`, `clippy`,
-  `rustc`, and `rustfmt` as well as sets `RUST_SRC_PATH`
-- `checks.${system}.${check}` attributes for build, test, clippy, and formatting
-  checks
-- `formatter.${system}` with additional support for formatting Rust files.
-
-See [flakelight-rust.nix][flakelight-rust] to see how to configure it without the
-module.
+See [flakelight-rust.nix][flakelight-rust] to see how you could configure it
+without the module.
 
 [flakelight-rust]: https://github.com/accelbread/flakelight-rust/blob/master/flakelight-rust.nix
 
@@ -107,10 +118,10 @@ The following example flake is for a C project with a simple `make` setup.
 
 ```nix
 {
+  description = "My C application.";
   inputs.flakelight.url = "github:accelbread/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
-      description = "My C application.";
       license = "AGPL-3.0-or-later";
 
       package = { stdenv, defaultMeta }:
@@ -127,7 +138,10 @@ The following example flake is for a C project with a simple `make` setup.
 
       devShell.packages = pkgs: with pkgs; [ clang-tools coreutils ];
 
-      formatters."*.c | *.h" = "clang-format -i";
+      formatters = {
+        "*.h" = "clang-format -i";
+        "*.c" = "clang-format -i";
+      }
     };
 }
 ```
@@ -135,13 +149,14 @@ The following example flake is for a C project with a simple `make` setup.
 This flake exports the following:
 
 - Per-system attributes for default systems (`x86_64-linux` and `aarch64-linux`)
-- `packages.${system}.default` attributes for each system
+- `packages.${system}.default` attributes for each system, with license and
+  description set
 - `overlays.default` providing an overlay with the package (built with the
   applied pkg set's dependencies)
-- `devShells.${system}.default` that provides `clang-tools` and `coreutils`.
+- `devShells.${system}.default` that provides `clang-tools` and `coreutils`
 - `checks.${system}.${check}` attributes for build and formatting checks.
 - `formatter.${system}` with additional support for formatting `c` and `h` files
-  with `clang-format`.
+  with `clang-format`
 
 ### C application using autoloads
 
@@ -152,15 +167,18 @@ like the following. Most attributes can be autoloaded.
 
 ```nix
 {
+  description = "My C application.";
   inputs.flakelight.url = "github:accelbread/flakelight";
   outputs = { flakelight, ... }@inputs:
     flakelight ./. {
-      description = "My C application.";
       license = "AGPL-3.0-or-later";
 
       devShell.packages = pkgs: with pkgs; [ clang-tools coreutils ];
 
-      formatters."*.c | *.h" = "clang-format -i";
+      formatters = {
+        "*.h" = "clang-format -i";
+        "*.c" = "clang-format -i";
+      }
     };
 }
 ```
@@ -180,3 +198,6 @@ stdenv.mkDerivation {
   meta = defaultMeta;
 }
 ```
+
+A leading underscore in filename is stripped (default needs to be escaped to not
+conflict with dir import).

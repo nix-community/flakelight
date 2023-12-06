@@ -21,6 +21,7 @@ in
       "*.nix" = "nixpkgs-fmt";
       "*.md" = "prettier --write";
       "*.json" = "prettier --write";
+      "*.yaml" = "prettier --write";
       "*.yml" = "prettier --write";
     };
   };

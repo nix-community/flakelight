@@ -5,43 +5,51 @@
 { config, lib, flakelight, ... }:
 let
   inherit (lib) filterAttrs mapAttrs mkDefault mkIf mkMerge mkOption;
-  inherit (lib.types) functionTo lazyAttrsOf lines listOf nullOr package str
-    submodule;
+  inherit (lib.types) coercedTo functionTo lazyAttrsOf lines listOf nullOr
+    package str submodule;
   inherit (flakelight) supportedSystem;
   inherit (flakelight.types) optFunctionTo packageDef;
+
+  devShellModule.options = {
+    inputsFrom = mkOption {
+      type = functionTo (listOf package);
+      default = _: [ ];
+    };
+
+    packages = mkOption {
+      type = functionTo (listOf package);
+      default = _: [ ];
+    };
+
+    shellHook = mkOption {
+      type = optFunctionTo lines;
+      default = "";
+    };
+
+    env = mkOption {
+      type = optFunctionTo (lazyAttrsOf str);
+      default = { };
+    };
+
+    stdenv = mkOption {
+      type = functionTo package;
+      default = pkgs: pkgs.stdenv;
+    };
+
+    overrideShell = mkOption {
+      type = nullOr packageDef;
+      internal = true;
+      default = null;
+    };
+  };
 in
 {
   options = {
     devShell = mkOption {
       default = null;
-      type = nullOr (submodule {
-        options = {
-          inputsFrom = mkOption {
-            type = functionTo (listOf package);
-            default = _: [ ];
-          };
-
-          packages = mkOption {
-            type = functionTo (listOf package);
-            default = _: [ ];
-          };
-
-          shellHook = mkOption {
-            type = optFunctionTo lines;
-            default = "";
-          };
-
-          env = mkOption {
-            type = optFunctionTo (lazyAttrsOf str);
-            default = { };
-          };
-
-          stdenv = mkOption {
-            type = functionTo package;
-            default = pkgs: pkgs.stdenv;
-          };
-        };
-      });
+      type = nullOr (coercedTo packageDef
+        (x: { overrideShell = x; })
+        (submodule devShellModule));
     };
 
     devShells = mkOption {
@@ -53,12 +61,13 @@ in
   config = mkMerge [
     (mkIf (config.devShell != null) {
       devShells.default = mkDefault ({ pkgs, mkShell }:
-        mkShell.override { stdenv = config.devShell.stdenv pkgs; }
-          ((config.devShell.env pkgs) // {
-            inputsFrom = config.devShell.inputsFrom pkgs;
-            packages = config.devShell.packages pkgs;
-            shellHook = config.devShell.shellHook pkgs;
-          }));
+        let cfg = mapAttrs (_: v: v pkgs) config.devShell; in
+        mkShell.override { inherit (cfg) stdenv; }
+          (cfg.env // { inherit (cfg) inputsFrom packages shellHook; }));
+    })
+
+    (mkIf (config.devShell.overrideShell or null != null) {
+      devShells.default = config.devShell.overrideShell;
     })
 
     (mkIf (config.devShells != { }) {

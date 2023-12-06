@@ -371,6 +371,9 @@ such an attribute set in order to access packages.
 `devShell.stdenv` allows changing the stdenv used for the shell. It is a
 function that takes the package set and returns the stdenv to use.
 
+`devShell` can alternatively be set to a package definition, which is then used
+as the default shell, overriding the above options.
+
 For example, these can be configured as follows:
 
 ```nix
@@ -397,7 +400,7 @@ For example, these can be configured as follows:
 
 The above exports `devShells.${system}.default` outputs.
 
-To add build inputs of one of your packages, you can do as follows:
+To add the build inputs of one of your packages, you can do as follows:
 
 ```nix
 {

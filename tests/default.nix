@@ -298,7 +298,7 @@ in
 
   devShell-override = test
     (flakelight ./empty {
-      devShells.default = { mkShell }: mkShell { };
+      devShell = { mkShell }: mkShell { };
     })
     (f: f ? devShells.x86_64-linux.default);
 
@@ -313,6 +313,12 @@ in
     (f: (f ? devShells.x86_64-linux.default)
       && (f ? devShells.x86_64-linux.shell1)
       && (f ? devShells.x86_64-linux.shell2));
+
+  devShells-override = test
+    (flakelight ./empty {
+      devShells.default = { mkShell }: mkShell { };
+    })
+    (f: f ? devShells.x86_64-linux.default);
 
   overlay = test
     (flakelight ./empty {

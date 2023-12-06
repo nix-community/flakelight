@@ -300,7 +300,14 @@ in
     (flakelight ./empty {
       devShell = { mkShell }: mkShell { };
     })
-    (f: f ? devShells.x86_64-linux.default);
+    (f: lib.isDerivation f.devShells.x86_64-linux.default);
+
+  devShell-override-empty = test
+    (flakelight ./empty {
+      disabledModules = [ "builtinFormatters.nix" ];
+      devShell = { mkShell }: mkShell { };
+    })
+    (f: lib.isDerivation f.devShells.x86_64-linux.default);
 
   devShells = test
     (flakelight ./empty {

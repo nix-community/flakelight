@@ -77,6 +77,13 @@ let
         merge = _: defs: { imports = getValues defs; };
       };
 
+      fileset = mkOptionType {
+        name = "fileset";
+        description = "fileset";
+        descriptionClass = "noun";
+        check = x: isPath x || x._type or null == "fileset";
+      };
+
       optListOf = elemType: coercedTo elemType singleton (listOf elemType);
 
       optFunctionTo = elemType: coercedTo elemType (x: _: x)

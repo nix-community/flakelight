@@ -41,7 +41,7 @@ system. `systems` can be set to change configured systems from the default.
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }
     flakelight ./. {
       devShell.packages = pkgs: [ pkgs.hello pkgs.coreutils ];
@@ -58,7 +58,7 @@ To use a different nixpkgs, you can instead use:
 {
   inputs = {
     nixpkgs.url = "nixpkgs/nixpkgs-unstable";
-    flakelight.url = "github:accelbread/flakelight";
+    flakelight.url = "github:nix-community/flakelight";
   };
   outputs = { flakelight, ... }@inputs:
     flakelight ./. {
@@ -98,7 +98,7 @@ Equivalently, you can just import the `flakelight-rust` module as follows:
 ```nix
 {
   inputs = {
-    flakelight.url = "github:accelbread/flakelight";
+    flakelight.url = "github:nix-community/flakelight";
     flakelight-rust.url = "github:accelbread/flakelight-rust";
   };
   outputs = { flakelight, flakelight-rust, ... }: flakelight ./. {
@@ -119,7 +119,7 @@ The following example flake is for a C project with a simple `make` setup.
 ```nix
 {
   description = "My C application.";
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       license = "AGPL-3.0-or-later";
@@ -168,7 +168,7 @@ like the following. Most attributes can be autoloaded.
 ```nix
 {
   description = "My C application.";
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }@inputs:
     flakelight ./. {
       license = "AGPL-3.0-or-later";

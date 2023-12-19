@@ -11,7 +11,7 @@ When called directly, Flakelight invokes `mkFlake`, as follows:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       # Your flake configuration here
@@ -23,7 +23,7 @@ To call `mkFlake` explicitly, you can do:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight.lib.mkFlake ./. {
       # Your flake configuration here
@@ -38,7 +38,7 @@ If you need access to module args, you can write it as bellow:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. ({ lib, config, ... }: {
       # Your flake configuration here
@@ -89,7 +89,7 @@ nixpkgs used for building outputs, you can pass your flake inputs in as follows:
 {
   inputs = {
     nixpkgs.url = "nixpkgs/nixpkgs-unstable";
-    flakelight.url = "github:accelbread/flakelight";
+    flakelight.url = "github:nix-community/flakelight";
   };
   outputs = { flakelight, ... }@inputs:
     flakelight ./. {
@@ -104,7 +104,7 @@ Or to just pass just the nixpkgs input:
 {
   inputs = {
     nixpkgs.url = "nixpkgs/nixpkgs-unstable";
-    flakelight.url = "github:accelbread/flakelight";
+    flakelight.url = "github:nix-community/flakelight";
   };
   outputs = { flakelight, nixpkgs, ... }:
     flakelight ./. {
@@ -125,7 +125,7 @@ as follows:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       systems = [ "x86_64-linux" "aarch64-linux" "i686-linux" "armv7l-linux" ];
@@ -137,7 +137,7 @@ To support all systems supported by flakes, set `systems` as follows:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. ({ lib, ... }: {
       systems = lib.systems.flakeExposed;
@@ -149,7 +149,7 @@ To support all Linux systems supported by flakes, set `systems` as follows:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. ({ lib, ... }: {
       systems = lib.intersectLists
@@ -169,7 +169,7 @@ To add a `example.test` output to your flake you could do the following:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       outputs = {
@@ -186,7 +186,7 @@ overlay (though this can be configured with the `overlays` option):
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       outputs.overlays.clang = final: prev: { stdenv = final.clangStdenv; };
@@ -205,7 +205,7 @@ following:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       perSystem = pkgs: {
@@ -228,7 +228,7 @@ option as follows:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       nixpkgs.config = { allowBroken = true; allowUnsupportedSystem = true; };
@@ -249,7 +249,7 @@ the option as follows:
 ```nix
 {
   inputs = {
-    flakelight.url = "github:accelbread/flakelight";
+    flakelight.url = "github:nix-community/flakelight";
     emacs-overlay.url = "github:nix-community/emacs-overlay";
   };
   outputs = { flakelight, emacs-overlay, ... }:
@@ -266,7 +266,7 @@ You can use the values from the overlays with other options:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       withOverlays = final: prev: { testValue = "hi"; };
@@ -291,7 +291,7 @@ To set the default package, you can set the options as follows:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       package = { stdenv }:
@@ -314,7 +314,7 @@ To set multiple packages, you can set the options as follows:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       packages = {
@@ -378,7 +378,7 @@ For example, these can be configured as follows:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       devShell = {
@@ -404,7 +404,7 @@ To add the build inputs of one of your packages, you can do as follows:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       package = { stdenv }:
@@ -429,7 +429,7 @@ For example:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       devShells.testing = { mkShell, coreutils }:
@@ -457,7 +457,7 @@ For example, to add an overlay to `overlays.default`, do the following:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       overlay = final: prev: { testValue = "hello"; };
@@ -471,7 +471,7 @@ To configure other overlays:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       overlays.cool = final: prev: { testValue = "cool"; };
@@ -501,7 +501,7 @@ For example:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       checks = {
@@ -529,7 +529,7 @@ For example:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       apps = {
@@ -545,7 +545,7 @@ Alternatively, the above can be written as:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       apps = { emacs, bash, ... }: {
@@ -570,7 +570,7 @@ For example:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       templates.test-template = {
@@ -593,7 +593,7 @@ For example, to use a custom formatting command:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       formatter = pkgs: pkgs.writeShellScriptBin "format-script" ''
@@ -626,7 +626,7 @@ For example, to set Rust and Zig formatters:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       devShell.packages = pkgs: [ pkgs.rustfmt pkgs.zig ];
@@ -655,7 +655,7 @@ For example, a bundler that returns the passed package:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       bundler = x: x;
@@ -667,7 +667,7 @@ As another example, a bundler that always returns `hello`:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       bundlers = { hello, ... }: {
@@ -699,7 +699,7 @@ For example:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. ({ lib, ... }: {
       nixosConfigurations.system = lib.nixosSystem {
@@ -712,7 +712,7 @@ For example:
 ```nix
 {
   inputs = {
-    flakelight.url = "github:accelbread/flakelight";
+    flakelight.url = "github:nix-community/flakelight";
     home-manger.url = "github:nix-community/home-manager";
   };
   outputs = { flakelight, home-manager, ... }:
@@ -728,7 +728,7 @@ Optionally, defining as a function:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       nixosConfigurations.system = { lib, ... }: lib.nixosSystem {
@@ -750,7 +750,7 @@ For example:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. ({ lib, ... }: {
       nixosModule = { system, lib, pkgs, ... }: {
@@ -764,7 +764,7 @@ These can be paths, which is preferred as it results in better debug output:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. ({ lib, ... }: {
       nixosModule = ./module.nix;
@@ -784,7 +784,7 @@ For example:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       lib = {
@@ -809,7 +809,7 @@ As an example:
 
 ```nix
 {
-  inputs.flakelight.url = "github:accelbread/flakelight";
+  inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
       outputs.testvalue = 5;

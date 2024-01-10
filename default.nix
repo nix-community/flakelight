@@ -2,8 +2,9 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-nixpkgs:
+inputs:
 let
+  inherit (inputs) nixpkgs;
   inherit (builtins) isAttrs isPath readDir;
   inherit (nixpkgs.lib) attrNames composeManyExtensions
     filter findFirst fix genAttrs getValues hasSuffix isFunction isList
@@ -20,6 +21,7 @@ let
       specialArgs.modulesPath = ./builtinModules;
       modules = builtinModules ++ self.extraModules ++ [
         { inputs.nixpkgs = mkDefault nixpkgs; }
+        { inputs.flakelight = mkDefault inputs.self; }
         { _module.args = { inherit src flakelight; }; }
         root
       ];

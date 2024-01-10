@@ -26,6 +26,8 @@ let
     inherit (config.nixpkgs) config;
     overlays = config.withOverlays ++ [ config.packageOverlay ];
   });
+
+  genSystems = f: genAttrs config.systems (system: f pkgsFor.${system});
 in
 {
   options = {
@@ -62,7 +64,7 @@ in
   config = {
     _module.args = {
       inherit (config) inputs outputs;
-      inherit pkgsFor;
+      inherit pkgsFor genSystems;
     };
 
     outputs = foldAttrs mergeAttrs { } (map

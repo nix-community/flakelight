@@ -10,6 +10,7 @@
 , inputs
 , outputs
 , pkgsFor
+, genSystems
 , specialArgs
 , modulesPath
 , moduleArgs

@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, flakelight, ... }:
+{ config, lib, flakelight, genSystems, ... }:
 let
   inherit (lib) filterAttrs mapAttrs mkDefault mkIf mkMerge mkOption;
   inherit (lib.types) coercedTo functionTo lazyAttrsOf lines listOf nullOr
@@ -71,10 +71,9 @@ in
     })
 
     (mkIf (config.devShells != { }) {
-      perSystem = pkgs: {
-        devShells = filterAttrs (_: supportedSystem pkgs)
-          (mapAttrs (_: v: pkgs.callPackage v { }) config.devShells);
-      };
+      outputs.devShells = genSystems (pkgs:
+        filterAttrs (_: supportedSystem pkgs)
+          (mapAttrs (_: v: pkgs.callPackage v { }) config.devShells));
     })
   ];
 }

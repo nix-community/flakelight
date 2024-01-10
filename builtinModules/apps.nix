@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, flakelight, ... }:
+{ config, lib, flakelight, genSystems, ... }:
 let
   inherit (lib) isFunction mapAttrs mkIf mkMerge mkOption;
   inherit (lib.types) lazyAttrsOf nullOr raw;
@@ -35,9 +35,8 @@ in
     })
 
     (mkIf (config.apps != null) {
-      perSystem = pkgs: {
-        apps = mapAttrs (_: mkApp pkgs) (config.apps pkgs);
-      };
+      outputs.apps = genSystems (pkgs:
+        mapAttrs (_: mkApp pkgs) (config.apps pkgs));
     })
   ];
 }

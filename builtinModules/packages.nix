@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, inputs, flakelight, ... }:
+{ config, lib, inputs, flakelight, genSystems, ... }:
 let
   inherit (builtins) parseDrvName;
   inherit (lib) filterAttrs mapAttrs mapAttrs' mkIf mkMerge mkOption
@@ -56,10 +56,13 @@ in
         (config.packageOverlay (final.appendOverlays config.withOverlays) prev)
         [ "default" ];
 
-      perSystem = pkgs: rec {
-        packages = filterAttrs (_: supportedSystem pkgs) (genPkgs pkgs);
+      outputs = rec {
+        packages = genSystems (pkgs:
+          filterAttrs (_: supportedSystem pkgs) (genPkgs pkgs));
 
-        checks = mapAttrs' (n: nameValuePair ("packages-" + n)) packages;
+        checks = mapAttrs
+          (_: mapAttrs' (n: nameValuePair ("packages-" + n)))
+          packages;
       };
     })
   ];

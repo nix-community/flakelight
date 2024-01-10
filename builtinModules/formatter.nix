@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, src, lib, flakelight, ... }:
+{ config, src, lib, flakelight, genSystems, ... }:
 let
   inherit (lib) mkDefault mkMerge mkOption mkIf mapAttrsToList;
   inherit (lib.types) lazyAttrsOf nullOr package str;
@@ -22,28 +22,26 @@ in
 
   config = mkMerge [
     (mkIf (config.formatter != null) {
-      perSystem = pkgs: {
-        formatter = config.formatter pkgs;
-      };
+      outputs.formatter = genSystems config.formatter;
     })
 
     (mkIf (config.formatters != null) {
-      perSystem = { pkgs, lib, fd, coreutils, ... }: {
-        formatter = mkDefault (pkgs.writeShellScriptBin "formatter" ''
-          PATH=${lib.makeBinPath ((config.devShell.packages or (_: [ ])) pkgs)}
-          for f in "$@"; do
-            if [ -d "$f" ]; then
-              ${fd}/bin/fd "$f" -Htf -x "$0" &
-            else
-              case "$(${coreutils}/bin/basename "$f")" in
-                ${toString (mapAttrsToList
-                  (n: v: "${n}) ${v} \"$f\" & ;;") (config.formatters pkgs))}
-              esac
-            fi
-          done &>/dev/null
-          wait
-        '');
-      };
+      outputs.formatter = mkDefault (genSystems
+        ({ pkgs, lib, fd, coreutils, ... }:
+          pkgs.writeShellScriptBin "formatter" ''
+            PATH=${lib.makeBinPath (config.devShell.packages or (_: [ ]) pkgs)}
+            for f in "$@"; do
+              if [ -d "$f" ]; then
+                ${fd}/bin/fd "$f" -Htf -x "$0" &
+              else
+                case "$(${coreutils}/bin/basename "$f")" in
+                  ${toString (mapAttrsToList
+                    (n: v: "${n}) ${v} \"$f\" & ;;") (config.formatters pkgs))}
+                esac
+              fi
+            done &>/dev/null
+            wait
+          ''));
     })
 
     (mkIf ((config.formatters != null) || (config.formatter != null)) {

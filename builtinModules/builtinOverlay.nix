@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, src, lib, inputs, outputs, flakelight, ... }:
+{ config, src, lib, inputs, outputs, flakelight, moduleArgs, ... }:
 let
   inherit (lib) isList mkOption mkOrder mapAttrs optionalAttrs;
   inherit (lib.types) listOf nullOr oneOf str;
@@ -29,7 +29,7 @@ in
       inherit (prev.stdenv.hostPlatform) system;
     in
     {
-      inherit src inputs outputs flakelight system;
+      inherit system moduleArgs src inputs outputs flakelight;
       inputs' = mapAttrs (_: mapAttrs (_: v: v.${system} or { })) inputs;
       outputs' = mapAttrs (_: v: v.${system} or { }) outputs;
 

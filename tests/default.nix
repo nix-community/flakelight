@@ -69,15 +69,15 @@ in
     }))
     (f: f.test);
 
-  outputs-autoloadArgs = test
-    (flakelight ./empty ({ autoloadArgs, ... }: {
-      outputs = { inherit autoloadArgs; };
+  outputs-moduleArgs = test
+    (flakelight ./empty ({ moduleArgs, ... }: {
+      outputs = { inherit moduleArgs; };
     }))
-    (f: f.autoloadArgs ? lib
-      && f.autoloadArgs ? src
-      && f.autoloadArgs ? inputs
-      && f.autoloadArgs ? outputs
-      && f.autoloadArgs ? flakelight);
+    (f: f.moduleArgs ? lib
+      && f.moduleArgs ? src
+      && f.moduleArgs ? inputs
+      && f.moduleArgs ? outputs
+      && f.moduleArgs ? flakelight);
 
   extra-pkgs-vals = test
     (flakelight ./empty {

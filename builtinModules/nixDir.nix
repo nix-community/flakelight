@@ -2,16 +2,14 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, src, lib, flakelight, inputs, outputs, ... }:
+{ config, src, lib, flakelight, moduleArgs, ... }:
 let
   inherit (lib) mkOption mkIf mkMerge optionalAttrs;
   inherit (flakelight) autoImport autoImportArgs;
   inherit (flakelight.types) path;
 
-  autoloadArgs = { inherit lib src inputs outputs flakelight; };
-
   autoImport' = autoImport config.nixDir;
-  autoImportArgs' = autoImportArgs config.nixDir autoloadArgs;
+  autoImportArgs' = autoImportArgs config.nixDir moduleArgs;
 in
 {
   options.nixDir = mkOption {
@@ -49,8 +47,6 @@ in
       functor = autoImport' "functor";
     in
     mkMerge [
-      { _module.args = { inherit autoloadArgs; }; }
-
       (mkIf (outputs != null) { inherit outputs; })
       (mkIf (perSystem != null) { inherit perSystem; })
       (mkIf (withOverlays != null) { inherit withOverlays; })

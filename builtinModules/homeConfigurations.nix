@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, flakelight, autoloadArgs, ... }:
+{ config, lib, flakelight, moduleArgs, ... }:
 let
   inherit (builtins) isAttrs mapAttrs;
   inherit (lib) foldl mapAttrsToList mergeOneOption mkOption mkOptionType mkIf
@@ -18,7 +18,7 @@ let
     merge = mergeOneOption;
   };
 
-  configs = mapAttrs (_: f: f autoloadArgs) config.homeConfigurations;
+  configs = mapAttrs (_: f: f moduleArgs) config.homeConfigurations;
 in
 {
   options.homeConfigurations = mkOption {

@@ -57,7 +57,7 @@ The following module arguments are available:
 - `flakelight`: flakelight lib attribute
 - `inputs`: value of inputs option
 - `outputs`: resulting output (i.e. final flake attributes)
-- `autoloadArgs`: arguments passed to supported autoloaded files
+- `moduleArgs`: All of the above arguments (passed to auto-loaded files)
 
 ## Additional pkgs values
 
@@ -65,8 +65,8 @@ Functions that take the package set as an argument, such as package definitions
 or `perSystem` values, have several additional values available in the package
 set.
 
-The `src`, `inputs`, `outputs`, and `flakelight` attributes are the same as the
-above module arguments.
+The `src`, `flakelight`, `inputs`, `outputs`, and `moduleArgs` attributes are
+the same as the above module arguments.
 
 `inputs'` and `outputs'` are transformed versions of `inputs` and `outputs` with
 system preselected. I.e., `inputs.emacs-overlay.packages.x86_64-linux.default`
@@ -692,7 +692,7 @@ outputs for NixOS systems and home-manager users.
 They should be set to an attribute set of respective configurations.
 
 Alternatively, the configurations can be functions, in which case those
-functions will be passed `autoloadArgs` and must return a standard
+functions will be passed `moduleArgs` and must return a standard
 configuration (this is useful when using autoloads with the `nixDir` feature).
 
 For example:
@@ -849,9 +849,8 @@ For a given supported attribute attr, the following is checked in order:
   files imported
 
 Many of the values can additionally be a function that takes module args to
-enable use of module args from imported files. The module args available are
-`lib`, `src`, `inputs`, `outputs`, and `flakelight`. For values without module
-args, these values can be obtained from pkgs args.
+enable use of module args from imported files. For values without module args,
+these values can be obtained from the pkg set as `moduleArgs` or directly.
 
 To enable using a directory for an attrset that includes a `default` attribute,
 attr names can be escaped with an underscore. For example,

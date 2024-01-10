@@ -57,6 +57,7 @@ The following module arguments are available:
 - `flakelight`: flakelight lib attribute
 - `inputs`: value of inputs option
 - `outputs`: resulting output (i.e. final flake attributes)
+- `pkgsFor`: attrset mapping systems to the pkgs set for that system
 - `moduleArgs`: All of the above arguments (passed to auto-loaded files)
 
 ## Additional pkgs values

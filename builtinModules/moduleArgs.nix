@@ -9,6 +9,7 @@
 , flakelight
 , inputs
 , outputs
+, pkgsFor
 , specialArgs
 , modulesPath
 , moduleArgs

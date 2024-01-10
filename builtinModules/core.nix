@@ -5,7 +5,7 @@
 { config, inputs, lib, flakelight, ... }:
 let
   inherit (builtins) all head isAttrs length;
-  inherit (lib) foldAttrs getFiles getValues mapAttrs mergeAttrs mkOption
+  inherit (lib) foldAttrs genAttrs getFiles getValues mapAttrs mergeAttrs mkOption
     mkOptionType showFiles showOption;
   inherit (lib.types) functionTo lazyAttrsOf listOf nonEmptyStr raw uniq;
   inherit (flakelight.types) optListOf overlay;
@@ -20,6 +20,12 @@ let
         (lazyAttrsOf outputs).merge loc defs
       else throw "The option `${showOption loc}' has conflicting definitions in ${showFiles (getFiles defs)}";
   };
+
+  pkgsFor = genAttrs config.systems (system: import inputs.nixpkgs {
+    inherit system;
+    inherit (config.nixpkgs) config;
+    overlays = config.withOverlays ++ [ config.packageOverlay ];
+  });
 in
 {
   options = {
@@ -54,16 +60,15 @@ in
   };
 
   config = {
-    _module.args = { inherit (config) inputs outputs; };
+    _module.args = {
+      inherit (config) inputs outputs;
+      inherit pkgsFor;
+    };
 
     outputs = foldAttrs mergeAttrs { } (map
       (system: mapAttrs
         (_: v: { ${system} = v; })
-        (config.perSystem (import inputs.nixpkgs {
-          inherit system;
-          inherit (config.nixpkgs) config;
-          overlays = config.withOverlays ++ [ config.packageOverlay ];
-        })))
+        (config.perSystem pkgsFor.${system}))
       config.systems);
   };
 }

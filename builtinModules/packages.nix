@@ -5,8 +5,8 @@
 { config, lib, inputs, flakelight, genSystems, ... }:
 let
   inherit (builtins) parseDrvName tryEval;
-  inherit (lib) filterAttrs findFirst mapAttrs mapAttrs' mkIf mkMerge
-    mkOption nameValuePair optionalAttrs;
+  inherit (lib) filterAttrs findFirst mapAttrs mapAttrs' mkIf mkMerge mkOption
+    nameValuePair optionalAttrs;
   inherit (lib.types) lazyAttrsOf nullOr str uniq;
   inherit (flakelight) supportedSystem;
   inherit (flakelight.types) overlay packageDef;
@@ -49,12 +49,14 @@ in
           getName = pkg: pkg.pname or (parseDrvName pkg.name).name;
           inherit (prev.stdenv.hostPlatform) system;
           baseNixpkgs = inputs.nixpkgs.legacyPackages.${system};
+          mockPkgs = import ../misc/nameMockedPkgs.nix prev;
 
           defaultPkgName = findFirst (x: (tryEval x).success)
             (throw ("Could not determine the name of the default package; " +
               "please set the `pname` flakelight option to the intended name."))
             [
               (assert config.pname != null; config.pname)
+              (getName (mockPkgs.callPackage config.packages.default { }))
               (getName (baseNixpkgs.callPackage config.packages.default { }))
               (getName (import inputs.nixpkgs {
                 inherit (prev.stdenv.hostPlatform) system;

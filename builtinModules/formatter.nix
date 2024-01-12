@@ -5,13 +5,13 @@
 { config, src, lib, flakelight, genSystems, ... }:
 let
   inherit (lib) mkDefault mkMerge mkOption mkIf mapAttrsToList;
-  inherit (lib.types) lazyAttrsOf nullOr package str;
+  inherit (lib.types) functionTo lazyAttrsOf nullOr package str;
   inherit (flakelight.types) optFunctionTo;
 in
 {
   options = {
     formatter = mkOption {
-      type = nullOr (optFunctionTo package);
+      type = nullOr (functionTo package);
       default = null;
     };
     formatters = mkOption {

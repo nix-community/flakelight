@@ -27,23 +27,23 @@ lib.fix (self: {
       if lib.isFunction args then lib.fix args else args;
   };
 
-  runCommandWith = { name, ... }: _: { inherit name; };
+  runCommandWith = args: _: args;
   runCommand = name: _: _: { inherit name; };
   runCommandLocal = name: _: _: { inherit name; };
   runCommandCC = name: _: _: { inherit name; };
-  writeTextFile = { name, ... }: { inherit name; };
+  writeTextFile = args: args;
   writeText = name: _: { inherit name; };
   writeTextDir = path: _: { name = builtins.baseNameOf path; };
   writeScript = name: _: { inherit name; };
   writeScriptBin = name: _: { inherit name; };
   writeShellScript = name: _: { inherit name; };
   writeShellScriptBin = name: _: { inherit name; };
-  writeShellApplication = { name, ... }: { inherit name; };
+  writeShellApplication = args: args;
   writeCBin = pname: _: { inherit pname; };
-  concatTextFile = { name, ... }: { inherit name; };
+  concatTextFile = args: args;
   concatText = name: _: { inherit name; };
   concatScript = name: _: { inherit name; };
-  symlinkJoin = { name, ... }: { inherit name; };
+  symlinkJoin = args: args;
   linkFarm = name: _: { inherit name; };
   linkFarmFromDrvs = name: _: { inherit name; };
 })

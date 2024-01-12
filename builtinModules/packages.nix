@@ -75,7 +75,8 @@ in
 
       outputs = rec {
         packages = genSystems (pkgs:
-          filterAttrs (_: supportedSystem pkgs) (genPkgs pkgs));
+          filterAttrs (_: supportedSystem pkgs)
+            (mapAttrs (k: _: pkgs.${k}) config.packages));
 
         checks = mapAttrs
           (_: mapAttrs' (n: nameValuePair ("packages-" + n)))

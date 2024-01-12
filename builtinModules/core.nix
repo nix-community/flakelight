@@ -5,8 +5,8 @@
 { config, inputs, lib, flakelight, ... }:
 let
   inherit (builtins) all head isAttrs length;
-  inherit (lib) foldAttrs genAttrs getFiles getValues mapAttrs mergeAttrs mkOption
-    mkOptionType showFiles showOption;
+  inherit (lib) foldAttrs genAttrs getFiles getValues mapAttrs mergeAttrs
+    mkOption mkOptionType showFiles showOption;
   inherit (lib.types) functionTo lazyAttrsOf listOf nonEmptyStr raw uniq;
   inherit (flakelight.types) optListOf overlay;
 

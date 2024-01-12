@@ -288,6 +288,12 @@ and have build checks in `checks.${system}`.
 
 `packages` can be set to attrs of package definitions.
 
+By default, the `packages.default` package's name (its attribute name in
+the package set and overlay) is automatically determined from the derivation's
+`pname`. In order to use a different attribute name from the package pname,
+to set it in cases where it cannot be automatically determined, or to speed up
+uncached evaluation, the flakelight `pname` option can be set.
+
 To set the default package, you can set the options as follows:
 
 ```nix
@@ -346,6 +352,25 @@ To set multiple packages, you can set the options as follows:
 The above will export `packages.${system}.default`, `packages.${system}.pkg2`,
 `packages.${system}.pkg3` attributes, add `pkg1`, `pkg2`, and `pkg3` to
 `overlays.default`, and export corresponding build checks.
+
+To use the first example, but manually specify the package name:
+
+```nix
+{
+  inputs.flakelight.url = "github:nix-community/flakelight";
+  outputs = { flakelight, ... }:
+    flakelight ./. {
+      pname = "pkgs-attribute-name";
+      package = { stdenv }:
+        stdenv.mkDerivation {
+          pname = "package-name";
+          version = "0.0.1";
+          src = ./.;
+          installPhase = "make DESTDIR=$out install";
+        };
+    };
+}
+```
 
 ### devShell
 

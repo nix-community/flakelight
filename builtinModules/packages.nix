@@ -4,10 +4,10 @@
 
 { config, lib, inputs, flakelight, genSystems, ... }:
 let
-  inherit (builtins) parseDrvName;
-  inherit (lib) filterAttrs mapAttrs mapAttrs' mkIf mkMerge mkOption
-    nameValuePair optionalAttrs;
-  inherit (lib.types) lazyAttrsOf nullOr uniq;
+  inherit (builtins) parseDrvName tryEval;
+  inherit (lib) filterAttrs findFirst mapAttrs mapAttrs' mkIf mkMerge
+    mkOption nameValuePair optionalAttrs;
+  inherit (lib.types) lazyAttrsOf nullOr str uniq;
   inherit (flakelight) supportedSystem;
   inherit (flakelight.types) overlay packageDef;
 
@@ -26,6 +26,11 @@ in
       default = { };
     };
 
+    pname = mkOption {
+      type = nullOr str;
+      default = null;
+    };
+
     packageOverlay = mkOption {
       internal = true;
       type = uniq overlay;
@@ -42,11 +47,21 @@ in
       packageOverlay = final: prev:
         let
           getName = pkg: pkg.pname or (parseDrvName pkg.name).name;
-          defaultPkgName = getName (import inputs.nixpkgs {
-            inherit (prev.stdenv.hostPlatform) system;
-            inherit (config.nixpkgs) config;
-            overlays = config.withOverlays ++ [ (final: _: genPkgs final) ];
-          }).default;
+          inherit (prev.stdenv.hostPlatform) system;
+          baseNixpkgs = inputs.nixpkgs.legacyPackages.${system};
+
+          defaultPkgName = findFirst (x: (tryEval x).success)
+            (throw ("Could not determine the name of the default package; " +
+              "please set the `pname` flakelight option to the intended name."))
+            [
+              (assert config.pname != null; config.pname)
+              (getName (baseNixpkgs.callPackage config.packages.default { }))
+              (getName (import inputs.nixpkgs {
+                inherit (prev.stdenv.hostPlatform) system;
+                inherit (config.nixpkgs) config;
+                overlays = config.withOverlays ++ [ (final: _: genPkgs final) ];
+              }).default)
+            ];
         in
         (optionalAttrs (config.packages ? default) {
           ${defaultPkgName} = genPkg final config.packages.default;

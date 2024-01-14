@@ -7,6 +7,7 @@ let
   inherit (lib) isList mkOption mkOrder mapAttrs optionalAttrs;
   inherit (lib.types) listOf nullOr oneOf str;
   inherit (builtins) pathExists;
+  inherit (flakelight) selectAttr;
 in
 {
   options = {
@@ -25,13 +26,10 @@ in
   };
 
   config.withOverlays = mkOrder 10 (final: prev:
-    let
-      inherit (prev.stdenv.hostPlatform) system;
-    in
-    {
+    let inherit (prev.stdenv.hostPlatform) system; in {
       inherit system moduleArgs src inputs outputs flakelight;
-      inputs' = mapAttrs (_: mapAttrs (_: v: v.${system} or { })) inputs;
-      outputs' = mapAttrs (_: v: v.${system} or { }) outputs;
+      inputs' = mapAttrs (_: selectAttr system) inputs;
+      outputs' = selectAttr system outputs;
 
       defaultMeta = {
         platforms = config.systems;

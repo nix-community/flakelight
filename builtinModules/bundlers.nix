@@ -9,7 +9,9 @@ let
   inherit (flakelight.types) function optFunctionTo;
 
   wrapBundler = pkgs: bundler: drv:
-    if isFunction (bundler (pkgs // drv)) then bundler pkgs drv else bundler drv;
+    if isFunction (bundler (pkgs // drv))
+    then bundler pkgs drv
+    else bundler drv;
 in
 {
   options = {

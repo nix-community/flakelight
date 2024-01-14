@@ -8,10 +8,8 @@ let
   inherit (lib.types) lazyAttrsOf nullOr raw;
   inherit (flakelight.types) optFunctionTo;
 
-  mkCheck = pkgs: src: name: cmd:
-    let
-      cmd' = if isFunction cmd then cmd pkgs else cmd;
-    in
+  mkCheck = pkgs: name: cmd:
+    let cmd' = if isFunction cmd then cmd pkgs else cmd; in
     if isDerivation cmd' then cmd' else
     pkgs.runCommand "check-${name}" { } ''
       cp --no-preserve=mode -r ${src} src
@@ -28,6 +26,6 @@ in
 
   config.outputs = mkIf (config.checks != null) {
     checks = genSystems (pkgs:
-      mapAttrs (mkCheck pkgs src) (config.checks pkgs));
+      mapAttrs (mkCheck pkgs) (config.checks pkgs));
   };
 }

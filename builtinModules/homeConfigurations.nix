@@ -4,41 +4,29 @@
 
 { config, lib, inputs, flakelight, moduleArgs, ... }:
 let
-  inherit (builtins) concatLists head mapAttrs match;
-  inherit (lib) foldl last mapAttrsToList mkOption mkIf recursiveUpdate
-    zipAttrsWith;
+  inherit (builtins) head mapAttrs match;
+  inherit (lib) foldl mapAttrsToList mkOption mkIf recursiveUpdate;
   inherit (lib.types) attrs lazyAttrsOf;
+  inherit (flakelight) selectAttr;
   inherit (flakelight.types) optFunctionTo;
 
   isHome = x: x ? activationPackage;
 
-  mergeCfg = zipAttrsWith (n: vs:
-    if n == "extraSpecialArgs" then
-      foldl (a: b: a // b) { } vs
-    else if n == "modules" then
-      concatLists vs
-    else last vs);
-
-  mkHome = name: cfg:
-    let
-      inherit (cfg) system;
-    in
-    inputs.home-manager.lib.homeManagerConfiguration (mergeCfg [
-      {
-        extraSpecialArgs = {
-          inherit inputs;
-          inputs' = mapAttrs (_: mapAttrs (_: v: v.${system} or { })) inputs;
-        };
-        modules = [
-          ({ lib, ... }: {
-            home.username = lib.mkDefault (head (match "([^@]*)(@.*)?" name));
-          })
-          config.propagationModule
-        ];
-        pkgs = inputs.nixpkgs.legacyPackages.${system};
-      }
-      (removeAttrs cfg [ "system" ])
-    ]);
+  mkHome = name: cfg: inputs.home-manager.lib.homeManagerConfiguration (
+    (removeAttrs cfg [ "system" ]) // {
+      extraSpecialArgs = {
+        inherit inputs;
+        inputs' = mapAttrs (_: selectAttr cfg.system) inputs;
+      } // cfg.extraSpecialArgs or { };
+      modules = [
+        ({ lib, ... }: {
+          home.username = lib.mkDefault (head (match "([^@]*)(@.*)?" name));
+        })
+        config.propagationModule
+      ] ++ cfg.modules or [ ];
+      pkgs = inputs.nixpkgs.legacyPackages.${cfg.system};
+    }
+  );
 
   configs = mapAttrs
     (name: f:

@@ -18,7 +18,9 @@ let
       if (length defs) == 1 then (head defs).value
       else if all isAttrs (getValues defs) then
         (lazyAttrsOf outputs).merge loc defs
-      else throw "The option `${showOption loc}' has conflicting definitions in ${showFiles (getFiles defs)}";
+      else
+        throw ("The option `${showOption loc}' has conflicting definitions" +
+          " in ${showFiles (getFiles defs)}");
   };
 
   pkgsFor = genAttrs config.systems (system: import inputs.nixpkgs {

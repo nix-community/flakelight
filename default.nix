@@ -6,10 +6,10 @@ inputs:
 let
   inherit (inputs) nixpkgs;
   inherit (builtins) isAttrs isPath readDir;
-  inherit (nixpkgs.lib) attrNames composeManyExtensions
-    filter findFirst fix genAttrs getValues hasSuffix isFunction isList
-    mapAttrsToList pathExists pipe removePrefix removeSuffix evalModules
-    mkDefault mkOptionType singleton;
+  inherit (nixpkgs.lib) attrNames composeManyExtensions evalModules filter
+    findFirst fix genAttrs getValues hasSuffix isFunction isList mapAttrs
+    mapAttrsToList mkDefault mkOptionType pathExists pipe removePrefix
+    removeSuffix singleton;
   inherit (nixpkgs.lib.types) coercedTo functionTo listOf;
   inherit (nixpkgs.lib.options) mergeEqualOption mergeOneOption;
 
@@ -36,61 +36,62 @@ let
   };
 
   flakelight = {
-    inherit mkFlake supportedSystem autoImport autoImportArgs;
+    inherit autoImport autoImportArgs mkFlake selectAttr supportedSystem
+      types;
+  };
 
-    types = {
-      overlay = mkOptionType {
-        name = "overlay";
-        description = "nixpkgs overlay";
-        descriptionClass = "noun";
-        check = isFunction;
-        merge = _: defs: composeManyExtensions (getValues defs);
-      };
-
-      packageDef = mkOptionType {
-        name = "packageDef";
-        description = "package definition";
-        descriptionClass = "noun";
-        check = isFunction;
-        merge = mergeOneOption;
-      };
-
-      path = mkOptionType {
-        name = "path";
-        description = "path";
-        descriptionClass = "noun";
-        check = isPath;
-        merge = mergeEqualOption;
-      };
-
-      function = mkOptionType {
-        name = "function";
-        description = "function";
-        descriptionClass = "noun";
-        check = isFunction;
-        merge = mergeOneOption;
-      };
-
-      module = mkOptionType {
-        name = "module";
-        description = "module";
-        descriptionClass = "noun";
-        check = x: isPath x || isFunction x || isAttrs x;
-        merge = _: defs: { imports = getValues defs; };
-      };
-
-      fileset = mkOptionType {
-        name = "fileset";
-        description = "fileset";
-        descriptionClass = "noun";
-        check = x: isPath x || x._type or null == "fileset";
-      };
-
-      optListOf = elemType: coercedTo elemType singleton (listOf elemType);
-
-      optFunctionTo = elemType: coercedTo elemType (x: _: x)
-        (functionTo elemType);
+  types = {
+    overlay = mkOptionType {
+      name = "overlay";
+      description = "nixpkgs overlay";
+      descriptionClass = "noun";
+      check = isFunction;
+      merge = _: defs: composeManyExtensions (getValues defs);
     };
+
+    packageDef = mkOptionType {
+      name = "packageDef";
+      description = "package definition";
+      descriptionClass = "noun";
+      check = isFunction;
+      merge = mergeOneOption;
+    };
+
+    path = mkOptionType {
+      name = "path";
+      description = "path";
+      descriptionClass = "noun";
+      check = isPath;
+      merge = mergeEqualOption;
+    };
+
+    function = mkOptionType {
+      name = "function";
+      description = "function";
+      descriptionClass = "noun";
+      check = isFunction;
+      merge = mergeOneOption;
+    };
+
+    module = mkOptionType {
+      name = "module";
+      description = "module";
+      descriptionClass = "noun";
+      check = x: isPath x || isFunction x || isAttrs x;
+      merge = _: defs: { imports = getValues defs; };
+    };
+
+    fileset = mkOptionType {
+      name = "fileset";
+      description = "fileset";
+      descriptionClass = "noun";
+      check = x: isPath x || x._type or null == "fileset";
+    };
+
+    optListOf = elemType: coercedTo elemType singleton (listOf elemType);
+
+    optFunctionTo = elemType: coercedTo elemType (x: _: x)
+      (functionTo elemType);
   };
 
   supportedSystem = { lib, stdenv, ... }:
@@ -125,5 +126,7 @@ let
   autoImportArgs = dir: args: name:
     let v = autoImport dir name; in
     if isFunction v then v args else v;
+
+  selectAttr = attr: mapAttrs (_: v: v.${attr} or { });
 in
 flakelight

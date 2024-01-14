@@ -11,9 +11,7 @@ let
   isApp = x: (x ? type) && (x.type == "app") && (x ? program);
 
   mkApp = pkgs: app:
-    let
-      app' = if isFunction app then app pkgs else app;
-    in
+    let app' = if isFunction app then app pkgs else app; in
     if isApp app' then app' else { type = "app"; program = "${app'}"; };
 in
 {

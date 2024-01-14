@@ -8,6 +8,7 @@
 { lib, config, flakelight, moduleArgs, inputs, outputs, ... }:
 let
   inherit (lib) mapAttrs mkOption optionalAttrs;
+  inherit (flakelight) selectAttr;
   inherit (flakelight.types) module;
 in
 {
@@ -15,10 +16,7 @@ in
 
   config.propagationModule =
     { lib, pkgs, options, ... }:
-    let
-      inherit (pkgs.stdenv.hostPlatform) system;
-    in
-    {
+    let inherit (pkgs.stdenv.hostPlatform) system; in {
       config = (optionalAttrs (options ? nixpkgs.overlays) {
         # Apply flakelight overlays to NixOS/home-manager configurations
         nixpkgs.overlays = lib.mkOrder 10
@@ -32,8 +30,8 @@ in
         # Give access to flakelight module args under `flake` arg.
         # Also include inputs'/outputs' which depend on `pkgs`.
         _module.args.flake = {
-          inputs' = mapAttrs (_: mapAttrs (_: v: v.${system} or { })) inputs;
-          outputs' = mapAttrs (_: v: v.${system} or { }) outputs;
+          inputs' = mapAttrs (_: selectAttr system) inputs;
+          outputs' = selectAttr system outputs;
         } // moduleArgs;
       };
     };

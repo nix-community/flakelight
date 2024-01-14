@@ -4,42 +4,28 @@
 
 { config, lib, inputs, flakelight, moduleArgs, ... }:
 let
-  inherit (builtins) concatLists mapAttrs;
-  inherit (lib) foldl last mapAttrsToList mkIf mkOption recursiveUpdate
-    zipAttrsWith;
+  inherit (builtins) mapAttrs;
+  inherit (lib) foldl mapAttrsToList mkIf mkOption recursiveUpdate;
   inherit (lib.types) attrs lazyAttrsOf;
+  inherit (flakelight) selectAttr;
   inherit (flakelight.types) optFunctionTo;
 
   # Avoid checking if toplevel is a derivation as it causes the nixos modules
   # to be evaluated.
   isNixos = x: x ? config.system.build.toplevel;
 
-  mergeCfg = zipAttrsWith (n: vs:
-    if n == "specialArgs" then
-      foldl (a: b: a // b) { } vs
-    else if n == "modules" then
-      concatLists vs
-    else last vs);
+  mkNixos = hostname: cfg: inputs.nixpkgs.lib.nixosSystem (cfg // {
+    specialArgs = {
+      inherit inputs hostname;
+      inputs' = mapAttrs (_: selectAttr cfg.system) inputs;
+    } // cfg.specialArgs or { };
+    modules = [ config.propagationModule ] ++ cfg.modules or [ ];
+  });
 
-  mkSystem = hostname: cfg:
-    let
-      inherit (cfg) system;
-    in
-    inputs.nixpkgs.lib.nixosSystem (mergeCfg [
-      {
-        specialArgs = {
-          inherit inputs hostname;
-          inputs' = mapAttrs (_: mapAttrs (_: v: v.${system} or { })) inputs;
-        };
-        modules = [ config.propagationModule ];
-      }
-      cfg
-    ]);
-
-  systems = mapAttrs
+  configs = mapAttrs
     (hostname: f:
       let val = f moduleArgs; in
-      if isNixos val then val else mkSystem hostname val)
+      if isNixos val then val else mkNixos hostname val)
     config.nixosConfigurations;
 in
 {
@@ -49,13 +35,15 @@ in
   };
 
   config.outputs = mkIf (config.nixosConfigurations != { }) {
-    nixosConfigurations = systems;
+    nixosConfigurations = configs;
     checks = foldl recursiveUpdate { } (mapAttrsToList
       (n: v: {
+        # Wrapping the drv is needed as computing its name is expensive
+        # If not wrapped, it slows down `nix flake show` significantly
         ${v.config.nixpkgs.system}."nixos-${n}" = v.pkgs.runCommand
           "check-nixos-${n}"
           { } "echo ${v.config.system.build.toplevel} > $out";
       })
-      systems);
+      configs);
   };
 }

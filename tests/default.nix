@@ -596,6 +596,26 @@ in
     }))
     (f: f ? nixosConfigurations.test.config.system.build.toplevel);
 
+  nixosConfigurationsWithProp = test
+    (flakelight ./empty ({ lib, config, ... }: {
+      nixosConfigurations.test = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          config.propagationModule
+          ({ flake, ... }: {
+            system.stateVersion = "24.05";
+            environment.variables = {
+              TEST1 = flake.inputs.nixpkgs.legacyPackages.x86_64-linux.hello;
+              TEST2 = flake.inputs'.nixpkgs.legacyPackages.hello;
+            };
+          })
+        ];
+      };
+    }))
+    (f: (f ? nixosConfigurations.test.config.system.build.toplevel)
+      && (f.nixosConfigurations.test.config.environment.variables.TEST1 ==
+      f.nixosConfigurations.test.config.environment.variables.TEST2));
+
   nixosModule = test
     (flakelight ./empty {
       nixosModule = _: { };

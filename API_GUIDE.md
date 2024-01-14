@@ -721,15 +721,24 @@ Alternatively, the configurations can be functions, in which case those
 functions will be passed `moduleArgs` and must return a standard
 configuration (this is useful when using autoloads with the `nixDir` feature).
 
+The `propagationModule` config provides a module to apply flakelight
+configuration to other module systems such as NixOS and home-manager. Applying
+this module will give modules in the nested modules system access to a `flake`
+module arg that contains the flakelight module args as well as `inputs'` and
+`outputs'`. Flakelight's packages configuration will also be applied to the pkgs
+of the nested module system (This includes flakelight's additional pkgs values,
+`withOverlays` overlays, and the flake's packages.
+
 For example:
 
 ```nix
 {
   inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
-    flakelight ./. ({ lib, ... }: {
+    flakelight ./. ({ lib, config, ... }: {
       nixosConfigurations.system = lib.nixosSystem {
         # nixosSystem arguments
+        modules = [ config.propagationModule ];
       };
     });
 }
@@ -742,11 +751,12 @@ For example:
     home-manger.url = "github:nix-community/home-manager";
   };
   outputs = { flakelight, home-manager, ... }:
-    flakelight ./. {
+    flakelight ./. ({ config, ... }: {
       homeConfigurations.user = home-manager.lib.homeManagerConfiguration {
         # homeManagerConfiguration arguments
+        modules = [ config.propagationModule ];
       };
-    };
+    });
 }
 ```
 

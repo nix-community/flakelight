@@ -2,40 +2,60 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, flakelight, moduleArgs, ... }:
+{ config, lib, inputs, flakelight, moduleArgs, ... }:
 let
-  inherit (builtins) isAttrs mapAttrs;
-  inherit (lib) foldl mapAttrsToList mergeOneOption mkIf mkOption mkOptionType
-    recursiveUpdate;
-  inherit (lib.types) lazyAttrsOf;
+  inherit (builtins) concatLists mapAttrs;
+  inherit (lib) foldl last mapAttrsToList mkIf mkOption recursiveUpdate
+    zipAttrsWith;
+  inherit (lib.types) attrs lazyAttrsOf;
   inherit (flakelight.types) optFunctionTo;
 
-  nixosConfiguration = mkOptionType {
-    name = "nixosConfiguration";
-    description = "nixosConfiguration";
-    descriptionClass = "noun";
-    check = x: isAttrs x
-      && x ? config.nixpkgs.system
-      && x ? config.system.build.toplevel;
-    merge = mergeOneOption;
-  };
+  # Avoid checking if toplevel is a derivation as it causes the nixos modules
+  # to be evaluated.
+  isNixos = x: x ? config.system.build.toplevel;
 
-  configs = mapAttrs (_: f: f moduleArgs) config.nixosConfigurations;
+  mergeCfg = zipAttrsWith (n: vs:
+    if n == "specialArgs" then
+      foldl (a: b: a // b) { } vs
+    else if n == "modules" then
+      concatLists vs
+    else last vs);
+
+  mkSystem = hostname: cfg:
+    let
+      inherit (cfg) system;
+    in
+    inputs.nixpkgs.lib.nixosSystem (mergeCfg [
+      {
+        specialArgs = {
+          inherit inputs hostname;
+          inputs' = mapAttrs (_: mapAttrs (_: v: v.${system} or { })) inputs;
+        };
+        modules = [ config.propagationModule ];
+      }
+      cfg
+    ]);
+
+  systems = mapAttrs
+    (hostname: f:
+      let val = f moduleArgs; in
+      if isNixos val then val else mkSystem hostname val)
+    config.nixosConfigurations;
 in
 {
   options.nixosConfigurations = mkOption {
-    type = lazyAttrsOf (optFunctionTo nixosConfiguration);
+    type = lazyAttrsOf (optFunctionTo attrs);
     default = { };
   };
 
   config.outputs = mkIf (config.nixosConfigurations != { }) {
-    nixosConfigurations = configs;
+    nixosConfigurations = systems;
     checks = foldl recursiveUpdate { } (mapAttrsToList
       (n: v: {
         ${v.config.nixpkgs.system}."nixos-${n}" = v.pkgs.runCommand
           "check-nixos-${n}"
           { } "echo ${v.config.system.build.toplevel} > $out";
       })
-      configs);
+      systems);
   };
 }

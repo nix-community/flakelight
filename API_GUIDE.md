@@ -710,24 +710,23 @@ To write the above using autoloads, can use the following:
 { hello, ... }: x: hello;
 ```
 
-### nixosConfigurations and homeConfigurations
+### nixosConfigurations
 
-The `nixosConfigurations` and `homeConfigurations` attributes let you set
-outputs for NixOS systems and home-manager users.
+The `nixosConfigurations` attribute lets you set outputs for NixOS systems and
+home-manager users.
 
-They should be set to an attribute set of respective configurations.
+It should be set to an attribute set. Each value should be a set of
+`nixpkgs.lib.nixosSystem` args, the result of calling `nixpkgs.lib.nixosSystem`,
+or a function that takes `moduleArgs` and returns one of the prior.
 
-Alternatively, the configurations can be functions, in which case those
-functions will be passed `moduleArgs` and must return a standard
-configuration (this is useful when using autoloads with the `nixDir` feature).
+When using a set of `nixpkgs.lib.nixosSystem` args, NixOS modules will have
+access to a `flake` module arg equivalent to `moduleArgs` plus `inputs'` and
+`outputs'`. Flakelight's pkgs attributes, `withOverlays`, and `packages` will
+also be available in the NixOS instance's pkgs.
 
-The `propagationModule` config provides a module to apply flakelight
-configuration to other module systems such as NixOS and home-manager. Applying
-this module will give modules in the nested modules system access to a `flake`
-module arg that contains the flakelight module args as well as `inputs'` and
-`outputs'`. Flakelight's packages configuration will also be applied to the pkgs
-of the nested module system (This includes flakelight's additional pkgs values,
-`withOverlays` overlays, and the flake's packages.
+When using the result of calling `nixpkgs.lib.nixosSystem`, the
+`config.propogationModule` value can be used as a NixOS module to gain the above
+benefits.
 
 For example:
 
@@ -736,13 +735,36 @@ For example:
   inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. ({ lib, config, ... }: {
-      nixosConfigurations.system = lib.nixosSystem {
-        # nixosSystem arguments
-        modules = [ config.propagationModule ];
+      nixosConfigurations.test-system = {
+        system = "x86_64-linux";
+        modules = [{ system.stateVersion = "24.05"; }];
       };
     });
 }
 ```
+
+### homeConfigurations
+
+The `homeConfigurations` attribute lets you set outputs for NixOS systems and
+home-manager users.
+
+It should be set to an attribute set. Each value should be a set of
+`home-manager.lib.homeManagerConfiguration` args, the result of calling
+`home-manager.lib.homeManagerConfiguration`, or a function that takes
+`moduleArgs` and returns one of the prior.
+
+When using a set of `homeManagerConfiguration` args, it is required to include
+`system` (`pkgs` does not need to be included), and `inputs.home-manager` must
+be set. home-manager modules will have access to a `flake` module arg equivalent
+to `moduleArgs` plus `inputs'` and `outputs'`. Flakelight's pkgs attributes,
+`withOverlays`, and `packages` will also be available in the home-manager
+instance's pkgs.
+
+When using the result of calling `homeManagerConfiguration`, the
+`config.propogationModule` value can be used as a home-manager module to gain
+the above benefits.
+
+For example:
 
 ```nix
 {
@@ -750,27 +772,14 @@ For example:
     flakelight.url = "github:nix-community/flakelight";
     home-manger.url = "github:nix-community/home-manager";
   };
-  outputs = { flakelight, home-manager, ... }:
+  outputs = { flakelight, home-manager, ... }@inputs:
     flakelight ./. ({ config, ... }: {
-      homeConfigurations.user = home-manager.lib.homeManagerConfiguration {
-        # homeManagerConfiguration arguments
-        modules = [ config.propagationModule ];
+      inherit inputs;
+      homeConfigurations.username = {
+        system = "x86_64-linux";
+        modules = [{ home.stateVersion = "24.05"; }];
       };
     });
-}
-```
-
-Optionally, defining as a function:
-
-```nix
-{
-  inputs.flakelight.url = "github:nix-community/flakelight";
-  outputs = { flakelight, ... }:
-    flakelight ./. {
-      nixosConfigurations.system = { lib, ... }: lib.nixosSystem {
-        # nixosSystem arguments
-      };
-    };
 }
 ```
 

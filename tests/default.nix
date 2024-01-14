@@ -589,14 +589,23 @@ in
 
   nixosConfigurations = test
     (flakelight ./empty ({ lib, ... }: {
-      nixosConfigurations.test = nixpkgs.lib.nixosSystem {
+      nixosConfigurations.test = {
         system = "x86_64-linux";
-        modules = [ ];
+        modules = [{ system.stateVersion = "24.05"; }];
       };
     }))
     (f: f ? nixosConfigurations.test.config.system.build.toplevel);
 
-  nixosConfigurationsWithProp = test
+  nixosConfigurationsManual = test
+    (flakelight ./empty ({ lib, ... }: {
+      nixosConfigurations.test = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [{ system.stateVersion = "24.05"; }];
+      };
+    }))
+    (f: f ? nixosConfigurations.test.config.system.build.toplevel);
+
+  nixosConfigurationsManualWithProp = test
     (flakelight ./empty ({ lib, config, ... }: {
       nixosConfigurations.test = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";

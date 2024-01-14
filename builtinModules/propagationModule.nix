@@ -7,7 +7,7 @@
 
 { lib, config, flakelight, moduleArgs, inputs, outputs, ... }:
 let
-  inherit (lib) composeManyExtensions mapAttrs mkOption optionalAttrs;
+  inherit (lib) mapAttrs mkOption optionalAttrs;
   inherit (flakelight.types) module;
 in
 {
@@ -21,16 +21,8 @@ in
     {
       config = (optionalAttrs (options ? nixpkgs.overlays) {
         # Apply flakelight overlays to NixOS/home-manager configurations
-        nixpkgs.overlays = lib.mkOrder 10 [
-          # Avoid re-applying overlays
-          # This can happen when home-manager's pkgs arg already has them
-          (final: prev: optionalAttrs (! prev ? flakelight) (
-            (composeManyExtensions
-              (config.withOverlays ++ [ config.packageOverlay ]))
-              final
-              prev
-          ))
-        ];
+        nixpkgs.overlays = lib.mkOrder 10
+          (config.withOverlays ++ [ config.packageOverlay ]);
       })
       // (optionalAttrs (options ? home-manager.sharedModules) {
         # Propagate module to home-manager when using its nixos module

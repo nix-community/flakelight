@@ -100,12 +100,15 @@ let
     (pipe (readDir path) [
       attrNames
       (filter (s: s != "default.nix"))
-      (filter (hasSuffix ".nix"))
+      (filter (s: (hasSuffix ".nix" s)
+        || pathExists (path + "/${s}/default.nix")))
       (map (removeSuffix ".nix"))
       (map (removePrefix "_"))
     ])
-    (p: import (path + (if pathExists
-      (path + "/_${p}.nix") then "/_${p}.nix" else "/${p}.nix")));
+    (p: import (path +
+      (if pathExists (path + "/_${p}.nix") then "/_${p}.nix"
+      else if pathExists (path + "/${p}.nix") then "/${p}.nix"
+      else "/${p}")));
 
   autoImport = dir: name:
     if isList name

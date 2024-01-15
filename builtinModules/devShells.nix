@@ -2,13 +2,15 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, flakelight, genSystems, ... }:
+{ config, lib, flakelight, genSystems, moduleArgs, ... }:
 let
-  inherit (lib) filterAttrs mapAttrs mkDefault mkIf mkMerge mkOption;
+  inherit (builtins) attrNames hasAttr;
+  inherit (lib) all filterAttrs functionArgs mapAttrs mkDefault mkIf mkMerge
+    mkOption;
   inherit (lib.types) coercedTo functionTo lazyAttrsOf lines listOf nullOr
     package str submodule;
   inherit (flakelight) supportedSystem;
-  inherit (flakelight.types) optFunctionTo packageDef;
+  inherit (flakelight.types) function optFunctionTo packageDef;
 
   devShellModule.options = {
     inputsFrom = mkOption {
@@ -42,13 +44,17 @@ let
       default = null;
     };
   };
+
+  moduleFromFn = fn:
+    if all (a: hasAttr a moduleArgs) (attrNames (functionArgs fn))
+    then fn moduleArgs
+    else { overrideShell = fn; };
 in
 {
   options = {
     devShell = mkOption {
       default = null;
-      type = nullOr (coercedTo packageDef
-        (x: { overrideShell = x; })
+      type = nullOr (coercedTo function moduleFromFn
         (submodule devShellModule));
     };
 

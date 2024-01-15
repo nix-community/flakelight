@@ -4,7 +4,7 @@
 
 { config, src, lib, flakelight, moduleArgs, ... }:
 let
-  inherit (lib) mkOption mkIf mkMerge optionalAttrs;
+  inherit (lib) mkOption mkIf mkMerge;
   inherit (flakelight) autoImport autoImportArgs;
   inherit (flakelight.types) path;
 
@@ -25,7 +25,7 @@ in
       package = autoImport' "package";
       packages = autoImportArgs' "packages";
       overlays = autoImportArgs' "overlays";
-      devShell = autoImportArgs' "devShell";
+      devShell = autoImport' "devShell";
       devShells = autoImportArgs' "devShells";
       app = autoImport' "app";
       apps = autoImport' "apps";
@@ -53,16 +53,7 @@ in
       (mkIf (package != null) { inherit package; })
       (mkIf (packages != null) { inherit packages; })
       (mkIf (overlays != null) { inherit overlays; })
-      (mkIf (devShell != null) {
-        devShell = optionalAttrs (devShell ? inputsFrom)
-          { inherit (devShell) inputsFrom; }
-        // optionalAttrs (devShell ? packages)
-          { inherit (devShell) packages; }
-        // optionalAttrs (devShell ? shellHook)
-          { inherit (devShell) shellHook; }
-        // optionalAttrs (devShell ? env)
-          { inherit (devShell) env; };
-      })
+      (mkIf (devShell != null) { inherit devShell; })
       (mkIf (devShells != null) { inherit devShells; })
       (mkIf (app != null) { inherit app; })
       (mkIf (apps != null) { inherit apps; })

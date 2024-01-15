@@ -28,7 +28,8 @@ in
     };
 
     templates = mkOption {
-      type = optCallWith moduleArgs (lazyAttrsOf template);
+      type = optCallWith moduleArgs
+        (lazyAttrsOf (optCallWith moduleArgs template));
       default = { };
     };
   };

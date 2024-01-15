@@ -83,6 +83,10 @@ This section covers the options available to modules.
 
 ### inputs
 
+```
+Type: AttrsOf FlakeInput
+```
+
 The `inputs` option allows setting the flake inputs used by modules. To set the
 nixpkgs used for building outputs, you can pass your flake inputs in as follows:
 
@@ -115,6 +119,10 @@ Or to just pass just the nixpkgs input:
 ```
 
 ### systems
+
+```
+Type: [SystemStr]
+```
 
 The `systems` option sets which systems per-system outputs should be created
 for.
@@ -162,6 +170,10 @@ To support all Linux systems supported by flakes, set `systems` as follows:
 
 ### nixDir
 
+```
+Type: Path
+```
+
 The `nixDir` option is `./nix` by default and sets which directory to use to
 automatically load nix files to configure flake options from.
 
@@ -187,9 +199,16 @@ All options except for `nixDir` and `_module` can be configured this way.
 
 ### outputs
 
+```
+Type: AttrSet | (ModuleArgs -> AttrSet)
+```
+
 The `outputs` option allows you to directly configure flake outputs. This should
 be used for porting or for configuring output attrs not otherwise supported by
 Flakelight.
+
+The option value may be an attrset or a function that takes `moduleArgs` and
+returns and attrset.
 
 To add a `example.test` output to your flake you could do the following:
 
@@ -222,6 +241,10 @@ overlay (though this can be configured with the `overlays` option):
 
 ### perSystem
 
+```
+Type: Pkgs -> AttrSet
+```
+
 The `perSystem` option allows you to directly configure per-system flake
 outputs, and gives you access to packages. This should be used for porting or
 for configuring output attrs not otherwise supported by Flakelight.
@@ -246,7 +269,11 @@ The above, with default systems, will generate `example.x86_64-linux.test` and
 
 ### nixpkgs.config
 
-This allows you to pass configuration options to the nixpkgs instance used for
+```
+Type: AttrSet
+```
+
+This allows you to pass configuration options to the Nixpkgs instance used for
 building packages and calling perSystem.
 
 For example, to allow building broken or unsupported packages, you can set the
@@ -264,7 +291,11 @@ option as follows:
 
 ### withOverlays
 
-This allows you to apply overlays to the nixpkgs instance used for building
+```
+Type: [Overlay] | Overlay
+```
+
+This allows you to apply overlays to the Nixpkgs instance used for building
 packages and calling perSystem.
 
 It can be set to either a list of overlays or a single overlay.
@@ -304,6 +335,13 @@ You can use the values from the overlays with other options:
 ```
 
 ### packages
+
+```
+Types:
+  package: PackageDef
+  packages: (AttrsOf PackageDef) | (ModuleArgs -> (AttrsOf PackageDef))
+  pname: Str
+```
 
 The `package` and `packages` options allow you to add packages. These are
 exported in the `packages.${system}` ouputs, are included in `overlays.default`,
@@ -399,6 +437,16 @@ To use the first example, but manually specify the package name:
 
 ### devShell
 
+```
+Type:
+  devShell: Cfg | (ModuleArgs -> Cfg) | PackageDef
+  Cfg.packages: Pkgs -> [Derivation]
+  Cfg.inputsFrom: Pkgs -> [Derivation]
+  Cfg.shellHook: Str | (Pkgs -> Str)
+  Cfg.env: (AttrsOf Str) | (Pkgs -> (AttrsOf Str))
+  Cfg.stdenv: Pkgs -> Stdenv
+```
+
 The devshell options allow you to configure `devShells.${system}.default`. It is
 split up into options in order to enable multiple modules to contribute to its
 configuration.
@@ -423,7 +471,8 @@ such an attribute set in order to access packages.
 function that takes the package set and returns the stdenv to use.
 
 `devShell` can alternatively be set to a package definition, which is then used
-as the default shell, overriding the above options.
+as the default shell, overriding the above options. It can also be set to a
+function that takes `moduleArgs` and returns an attrSet of the above options.
 
 For example, these can be configured as follows:
 
@@ -474,6 +523,10 @@ To add the build inputs of one of your packages, you can do as follows:
 
 ### devShells
 
+```
+Type: (AttrsOf PackageDef) | (ModuleArgs -> (AttrsOf PackageDef))
+```
+
 The `devShells` option allows you to set additional `devShell` outputs.
 
 For example:
@@ -495,6 +548,12 @@ For example:
 The above exports `devShells.${system}.testing` outputs.
 
 ### overlays
+
+```
+Types:
+  overlay: Overlay
+  overlays: (AttrsOf Overlay) | (ModuleArgs -> (AttrsOf Overlay)
+```
 
 The `overlay` and `overlays` options allow you to configure `overlays` outputs.
 
@@ -534,6 +593,12 @@ The above results in a `overlays.cool` output.
 
 ### checks
 
+```
+Types:
+  checks: (AttrsOf Check) | (Pkgs -> (AttrsOf Check))
+  Check: Str | (Pkgs -> Str) | Derivation | (Pkgs -> Derivation)
+```
+
 The `checks` option allows you to add checks for `checks.${system}` attributes.
 
 It can be set to an attribute set of checks, which can be functions,
@@ -566,6 +631,13 @@ For example:
 ```
 
 ### apps
+
+```
+Types:
+  app: App'
+  apps: (AttrsOf App') | (Pkgs -> (AttrsOf App'))
+  App': Str | (Pkgs -> Str) | App | (Pkgs -> App)
+```
 
 The `app` and `apps` options allow you to set `apps.${system}` outputs.
 
@@ -610,6 +682,13 @@ Alternatively, the above can be written as:
 
 ### templates
 
+```
+Types:
+  template: Template | (ModuleArgs -> Template)
+  templates: (AttrsOf (Template | (ModuleArgs -> Template))) |
+             (ModuleArgs -> (AttrsOf (Template | (ModuleArgs -> Template))))
+```
+
 The `template` and `templates` options allow you to set `templates`
 outputs.
 
@@ -634,6 +713,10 @@ For example:
 
 ### formatter
 
+```
+Type: Pkgs -> Derivation
+```
+
 The `formatter` option allows you to set `formatter.${system}` outputs. It can
 be set to a function that takes packages and returns the package to use. This
 overrides the `formatters` functionality described below though, so for
@@ -655,6 +738,10 @@ For example, to use a custom formatting command:
 ```
 
 ### formatters
+
+```
+Type: (AttrsOf Str) | (Pkgs -> (AttrsOf Str))
+```
 
 The `formatters` option allows you to configure formatting tools that will be
 used by `nix fmt`. If formatters are set, Flakelight will export
@@ -690,6 +777,13 @@ For example, to set Rust and Zig formatters:
 ```
 
 ### bundlers
+
+```
+Types:
+  bundler: Bundler | (Pkgs -> Bundler)
+  bundlers: (AttrsOf (Bundler | (Pkgs -> Bundler))) |
+            (ModuleArgs -> (AttrsOf (Bundler | (Pkgs -> Bundler))))
+```
 
 The `bundler` and `bundlers` options allow you to set `bundlers.${system}`
 outputs.
@@ -737,6 +831,13 @@ To write the above using autoloads, can use the following:
 
 ### nixosConfigurations
 
+```
+Type: (AttrsOf (NixOSArgs | NixOSConfig |
+        (ModuleArgs -> (NixOSArgs | NixOSConfig)))) |
+      (ModuleArgs -> (AttrsOf (NixOSArgs | NixOSConfig |
+                       (ModuleArgs -> (NixOSArgs | NixOSConfig)))))
+```
+
 The `nixosConfigurations` attribute lets you set outputs for NixOS systems and
 home-manager users.
 
@@ -769,6 +870,13 @@ For example:
 ```
 
 ### homeConfigurations
+
+```
+Type: (AttrsOf (HomeArgs | HomeConfig |
+        (ModuleArgs -> (HomeArgs | HomeConfig)))) |
+      (ModuleArgs -> (AttrsOf (HomeArgs | HomeConfig |
+                       (ModuleArgs -> (HomeArgs | HomeConfig)))))
+```
 
 The `homeConfigurations` attribute lets you set outputs for NixOS systems and
 home-manager users.
@@ -810,6 +918,16 @@ For example:
 
 ### nixosModules, homeModules, and flakelightModules
 
+```
+Types:
+  nixosModule: Module
+  nixosModules: (AttrsOf Module) | (ModuleArgs -> (AttrsOf Module))
+  homeModule: Module
+  homeModules: (AttrsOf Module) | (ModuleArgs -> (AttrsOf Module))
+  flakelightModule: Module
+  flakelightModules: (AttrsOf Module) | (ModuleArgs -> (AttrsOf Module))
+```
+
 The `nixosModules`, `homeModules`, and `flakelightModules` options allow you to
 configure the corresponding outputs.
 
@@ -848,6 +966,10 @@ These can be paths, which is preferred as it results in better debug output:
 
 ### lib
 
+```
+Type: AttrSet | (ModuleArgs -> AttrSet)
+```
+
 The `lib` option allows you to configure the flake's `lib` output.
 
 For example:
@@ -866,6 +988,10 @@ For example:
 ```
 
 ### functor
+
+```
+Type: Outputs -> Any -> Any
+```
 
 The `functor` option allows you to make your flake callable.
 
@@ -893,6 +1019,12 @@ would be able to call `addFive 4` to get 9.
 
 ### meta
 
+```
+Types:
+  description: Str
+  license: Str | [Str]
+```
+
 The following options are available for configuring the meta attributes of the
 default package for supported modules (such as flakelight-rust or
 flakelight-zig) or for use in your own packages through the `defaultMeta` pkgs
@@ -902,10 +1034,16 @@ value.
 flake description, if found.
 
 `license` lets you set the license or license. It may be a single string or list
-of strings. These strings may be Spdx license identifiers or nixpkgs license
+of strings. These strings may be Spdx license identifiers or Nixpkgs license
 attribute names.
 
 ### flakelight
+
+```
+Types:
+  flakelight.editorconfig: Bool
+  flakelight.builtinFormatters: Bool
+```
 
 This option has options for configuring Flakelight's defaults.
 

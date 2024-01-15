@@ -5,23 +5,24 @@
 { config, options, src, lib, flakelight, ... }:
 let
   inherit (builtins) attrNames;
-  inherit (lib) findFirst genAttrs isList mkIf mkOption pathExists
-    subtractLists;
+  inherit (lib) findFirst genAttrs mkIf mkOption pathExists subtractLists;
   inherit (lib.types) attrsOf listOf str;
   inherit (flakelight) importDir;
   inherit (flakelight.types) path;
 
-  autoImport = dir: name:
-    if isList name
-    then findFirst (x: x != null) null (map (autoImport dir) name)
-    else
-      if pathExists (dir + "/${name}.nix")
-      then import (dir + "/${name}.nix")
-      else if pathExists (dir + "/${name}/default.nix")
-      then import (dir + "/${name}")
-      else if pathExists (dir + "/${name}")
-      then importDir (dir + "/${name}")
-      else null;
+  inherit (config) nixDir;
+
+  importName = name:
+    if pathExists (nixDir + "/${name}.nix")
+    then { success = true; value = import (nixDir + "/${name}.nix"); }
+    else if pathExists (nixDir + "/${name}/default.nix")
+    then { success = true; value = import (nixDir + "/${name}"); }
+    else if pathExists (nixDir + "/${name}")
+    then { success = true; value = importDir (nixDir + "/${name}"); }
+    else { success = false; };
+
+  importNames = names:
+    findFirst (x: x.success) { success = false; } (map importName names);
 in
 {
   options = {
@@ -40,10 +41,10 @@ in
     (name:
       let
         internal = options.${name}.internal or false;
-        val = autoImport config.nixDir
-          (if name == "nixDirAliases" then name else
+        val = importNames
+          (if name == "nixDirAliases" then [ name ] else
           ([ name ] ++ config.nixDirAliases.${name} or [ ]));
-        cond = !internal && (val != null);
+        cond = !internal && val.success;
       in
-      mkIf cond (if cond then val else { }));
+      mkIf cond (if cond then val.value else { }));
 }

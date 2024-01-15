@@ -15,6 +15,11 @@ let
       mock = lib.mapAttrs (_: _: throw "") (lib.filterAttrs (_: v: !v) fargs);
     in
     f (mock // builtins.intersectAttrs fargs autoArgs // args);
+
+  mockStdenv = real: stdenv: real.${stdenv} or (throw "") // {
+    mkDerivation = args:
+      if lib.isFunction args then lib.fix args else args;
+  };
 in
 lib.fix (self: {
   pkgs = self;
@@ -22,10 +27,18 @@ lib.fix (self: {
 
   callPackage = callPackageWith self;
 
-  stdenv = real.stdenv // {
-    mkDerivation = args:
-      if lib.isFunction args then lib.fix args else args;
-  };
+  stdenv = mockStdenv real "stdenv";
+  stdenvNoCC = mockStdenv real "stdenvNoCC";
+  stdenv_32bit = mockStdenv real "stdenv_32bit";
+  stdenvNoLibs = mockStdenv real "stdenvNoLibs";
+  libcxxStdenv = mockStdenv real "libcxxStdenv";
+  gccStdenv = mockStdenv real "gccStdenv";
+  gccStdenvNoLibs = mockStdenv real "gccStdenvNoLibs";
+  gccMultiStdenv = mockStdenv real "gccMultiStdenv";
+  clangStdenv = mockStdenv real "clangStdenv";
+  clangStdenvNoLibs = mockStdenv real "clangStdenvNoLibs";
+  clangMultiStdenv = mockStdenv real "clangMultiStdenv";
+  ccacheStdenv = mockStdenv real "ccacheStdenv";
 
   runCommandWith = args: _: args;
   runCommand = name: _: _: { inherit name; };

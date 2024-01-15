@@ -13,7 +13,7 @@ in
     default = null;
   };
 
-  config.outputs = mkIf (config.functor != null) {
+  config.outputs = mkIf (config.functor != null) (_: {
     __functor = config.functor;
-  };
+  });
 }

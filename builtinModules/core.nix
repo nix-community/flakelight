@@ -2,13 +2,13 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, inputs, lib, flakelight, ... }:
+{ config, inputs, lib, flakelight, moduleArgs, ... }:
 let
   inherit (builtins) all head isAttrs length;
   inherit (lib) foldAttrs genAttrs getFiles getValues mapAttrs mergeAttrs
     mkOption mkOptionType showFiles showOption;
   inherit (lib.types) functionTo lazyAttrsOf listOf nonEmptyStr raw uniq;
-  inherit (flakelight.types) optListOf overlay;
+  inherit (flakelight.types) optCallWith optListOf overlay;
 
   outputs = mkOptionType {
     name = "outputs";
@@ -43,7 +43,7 @@ in
     };
 
     outputs = mkOption {
-      type = lazyAttrsOf outputs;
+      type = optCallWith moduleArgs (lazyAttrsOf outputs);
       default = { };
     };
 

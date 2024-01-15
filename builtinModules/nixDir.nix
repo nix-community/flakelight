@@ -19,7 +19,7 @@ in
 
   config =
     let
-      outputs = autoImportArgs' "outputs";
+      outputs = autoImport' "outputs";
       perSystem = autoImport' "perSystem";
       withOverlays = autoImport' "withOverlays";
       package = autoImport' "package";

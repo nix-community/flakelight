@@ -36,8 +36,8 @@ let
   };
 
   flakelight = {
-    inherit autoImport autoImportArgs mkFlake selectAttr supportedSystem
-      types;
+    inherit autoImport autoImportArgs importDir mkFlake selectAttr
+      supportedSystem types;
   };
 
   types = {
@@ -114,8 +114,10 @@ let
       else if pathExists (path + "/${p}.nix") then "/${p}.nix"
       else "/${p}")));
 
-  autoImport = dir: name:
-    if isList name
+  autoImport = dir: name: warn
+    ("The autoImport function is deprecated. " +
+      "All options are now automatically auto-loaded.")
+    (if isList name
     then findFirst (x: x != null) null (map (autoImport dir) name)
     else
       if pathExists (dir + "/${name}.nix")
@@ -124,7 +126,7 @@ let
       then import (dir + "/${name}")
       else if pathExists (dir + "/${name}")
       then importDir (dir + "/${name}")
-      else null;
+      else null);
 
   autoImportArgs = dir: args: name: warn
     ("The autoImportArgs function is deprecated. " +

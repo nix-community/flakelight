@@ -12,7 +12,7 @@ let
     let
       f = if lib.isFunction fn then fn else import fn;
       fargs = lib.functionArgs f;
-      mock = lib.mapAttrs (_: _: { }) (lib.filterAttrs (_: v: !v) fargs);
+      mock = lib.mapAttrs (_: _: throw "") (lib.filterAttrs (_: v: !v) fargs);
     in
     f (mock // builtins.intersectAttrs fargs autoArgs // args);
 in

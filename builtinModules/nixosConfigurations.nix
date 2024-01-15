@@ -32,16 +32,19 @@ in
     default = { };
   };
 
-  config.outputs = mkIf (config.nixosConfigurations != { }) {
-    nixosConfigurations = configs;
-    checks = foldl recursiveUpdate { } (mapAttrsToList
-      (n: v: {
-        # Wrapping the drv is needed as computing its name is expensive
-        # If not wrapped, it slows down `nix flake show` significantly
-        ${v.config.nixpkgs.system}."nixos-${n}" = v.pkgs.runCommand
-          "check-nixos-${n}"
-          { } "echo ${v.config.system.build.toplevel} > $out";
-      })
-      configs);
+  config = {
+    outputs = mkIf (config.nixosConfigurations != { }) {
+      nixosConfigurations = configs;
+      checks = foldl recursiveUpdate { } (mapAttrsToList
+        (n: v: {
+          # Wrapping the drv is needed as computing its name is expensive
+          # If not wrapped, it slows down `nix flake show` significantly
+          ${v.config.nixpkgs.system}."nixos-${n}" = v.pkgs.runCommand
+            "check-nixos-${n}"
+            { } "echo ${v.config.system.build.toplevel} > $out";
+        })
+        configs);
+    };
+    nixDirAliases.nixosConfigurations = [ "nixos" ];
   };
 }

@@ -38,12 +38,15 @@ in
     default = { };
   };
 
-  config.outputs = mkIf (config.homeConfigurations != { }) {
-    homeConfigurations = configs;
-    checks = foldl recursiveUpdate { } (mapAttrsToList
-      (n: v: {
-        ${v.config.nixpkgs.system}."home-${n}" = v.activationPackage;
-      })
-      configs);
+  config = {
+    outputs = mkIf (config.homeConfigurations != { }) {
+      homeConfigurations = configs;
+      checks = foldl recursiveUpdate { } (mapAttrsToList
+        (n: v: {
+          ${v.config.nixpkgs.system}."home-${n}" = v.activationPackage;
+        })
+        configs);
+    };
+    nixDirAliases.homeConfigurations = [ "home" ];
   };
 }

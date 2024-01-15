@@ -12,7 +12,7 @@ let
   inherit (flakelight.types) module;
 in
 {
-  options.propagationModule = mkOption { type = module; };
+  options.propagationModule = mkOption { type = module; internal = true; };
 
   config.propagationModule =
     { lib, pkgs, options, ... }:

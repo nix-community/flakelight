@@ -160,6 +160,31 @@ To support all Linux systems supported by flakes, set `systems` as follows:
 }
 ```
 
+### nixDir
+
+The `nixDir` option is `./nix` by default and sets which directory to use to
+automatically load nix files to configure flake options from.
+
+For a given option, the following is checked in order:
+
+- If `${nixDir}/option.nix` exists, it is imported as the value
+- Else if `${nixDir}/option` is a directory with a `default.nix`, it is imported
+- Else if `${nixDir}/option` is a directory, it results in an attrset with an
+  attr for each importable item in the directory for which the values are the
+  corresponding items imported. An importable item is a file ending with `.nix`
+  or a directory containing a `default.nix`.
+
+To enable using a directory for an attrset that includes a `default` attribute,
+attr names can be escaped with an underscore. For example,
+`${nixDir}/nix/packages/_default.nix` will be loaded as `packages.default`.
+
+Aliases for options can be set with the `nixDirAliases` option. For example,
+by default `nixDirAliases.nixosConfigurations = [ "nixos" ];` is set which means
+"nixos" can be used instead of "nixosConfiguraions" for loading the files as
+described above.
+
+All options except for `nixDir` and `_module` can be configured this way.
+
 ### outputs
 
 The `outputs` option allows you to directly configure flake outputs. This should
@@ -879,57 +904,6 @@ flake description, if found.
 `license` lets you set the license or license. It may be a single string or list
 of strings. These strings may be Spdx license identifiers or nixpkgs license
 attribute names.
-
-### nixDir
-
-The `nixDir` option is `./nix` by default and sets which directory to use to
-automatically load nix files for flake attributes from.
-
-For a given supported attribute attr, the following is checked in order:
-
-- If `${nixDir}/attr.nix` exists, it is imported as the value
-- Else if `${nixDir}/attr` is a directory with a `default.nix`, it is imported
-- Else if `${nixDir}/attr` is a directory, it results in an attrset with an
-  entry for each nix file in the directory whose values are the corresponding
-  files imported
-
-Many of the values can additionally be a function that takes module args to
-enable use of module args from imported files. For values without module args,
-these values can be obtained from the pkg set as `moduleArgs` or directly.
-
-To enable using a directory for an attrset that includes a `default` attribute,
-attr names can be escaped with an underscore. For example,
-`${nixDir}/nix/packages/_default.nix` will be loaded as `packages.default`.
-
-The following options can be autoloaded with optional module args:
-
-- outputs
-- packages
-- overlays
-- devShell
-- devShells
-- tempalte
-- templates
-- nixosModules
-- nixosConfigurations
-- homeModules
-- homeConfigurations
-- flakelightModules
-- lib
-
-The following options can be autoloaded (no module args):
-
-- perSystem
-- withOverlays
-- package
-- app
-- apps
-- checks
-- formatters
-- nixosModule
-- homeModule
-- flakelightModule
-- functor
 
 ### flakelight
 

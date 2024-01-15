@@ -9,7 +9,7 @@ let
   inherit (nixpkgs.lib) attrNames composeManyExtensions evalModules filter
     findFirst fix genAttrs getValues hasSuffix isFunction isList mapAttrs
     mapAttrsToList mkDefault mkOptionType pathExists pipe removePrefix
-    removeSuffix singleton;
+    removeSuffix singleton warn;
   inherit (nixpkgs.lib.types) coercedTo functionTo listOf;
   inherit (nixpkgs.lib.options) mergeEqualOption mergeOneOption;
 
@@ -126,9 +126,13 @@ let
       then importDir (dir + "/${name}")
       else null;
 
-  autoImportArgs = dir: args: name:
-    let v = autoImport dir name; in
-    if isFunction v then v args else v;
+  autoImportArgs = dir: args: name: warn
+    ("The autoImportArgs function is deprecated. " +
+      "Wrap the target type in flakelight.types.optCallWith instead.")
+    (
+      let v = autoImport dir name; in
+      if isFunction v then v args else v
+    );
 
   selectAttr = attr: mapAttrs (_: v: v.${attr} or { });
 in

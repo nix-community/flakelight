@@ -2,11 +2,11 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, flakelight, ... }:
+{ config, lib, flakelight, moduleArgs, ... }:
 let
   inherit (lib) mkOption mkIf mkMerge;
   inherit (lib.types) lazyAttrsOf nullOr;
-  inherit (flakelight.types) module;
+  inherit (flakelight.types) module optCallWith;
 in
 {
   options = {
@@ -16,7 +16,7 @@ in
     };
 
     flakelightModules = mkOption {
-      type = lazyAttrsOf module;
+      type = optCallWith moduleArgs (lazyAttrsOf module);
       default = { };
     };
   };

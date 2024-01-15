@@ -34,7 +34,7 @@ let
 in
 {
   options.homeConfigurations = mkOption {
-    type = lazyAttrsOf (optCallWith moduleArgs attrs);
+    type = optCallWith moduleArgs (lazyAttrsOf (optCallWith moduleArgs attrs));
     default = { };
   };
 

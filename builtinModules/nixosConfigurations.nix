@@ -28,7 +28,7 @@ let
 in
 {
   options.nixosConfigurations = mkOption {
-    type = lazyAttrsOf (optCallWith moduleArgs attrs);
+    type = optCallWith moduleArgs (lazyAttrsOf (optCallWith moduleArgs attrs));
     default = { };
   };
 

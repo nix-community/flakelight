@@ -2,14 +2,14 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, inputs, flakelight, genSystems, ... }:
+{ config, lib, inputs, flakelight, genSystems, moduleArgs, ... }:
 let
   inherit (builtins) parseDrvName tryEval;
   inherit (lib) filterAttrs findFirst mapAttrs mapAttrs' mkIf mkMerge mkOption
     nameValuePair optionalAttrs;
   inherit (lib.types) lazyAttrsOf nullOr str uniq;
   inherit (flakelight) supportedSystem;
-  inherit (flakelight.types) overlay packageDef;
+  inherit (flakelight.types) optCallWith overlay packageDef;
 
   genPkg = pkgs: pkg: pkgs.callPackage pkg { };
   genPkgs = pkgs: mapAttrs (_: genPkg pkgs) config.packages;
@@ -22,7 +22,7 @@ in
     };
 
     packages = mkOption {
-      type = lazyAttrsOf packageDef;
+      type = optCallWith moduleArgs (lazyAttrsOf packageDef);
       default = { };
     };
 

@@ -2,12 +2,13 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, ... }:
+{ config, lib, flakelight, moduleArgs, ... }:
 let
   inherit (builtins) isPath isString;
   inherit (lib) mkOption mkOptionType mkIf mkMerge;
   inherit (lib.types) lazyAttrsOf nullOr;
   inherit (lib.options) mergeEqualOption;
+  inherit (flakelight.types) optCallWith;
 
   template = mkOptionType {
     name = "template";
@@ -22,12 +23,12 @@ in
 {
   options = {
     template = mkOption {
-      type = nullOr template;
+      type = nullOr (optCallWith moduleArgs template);
       default = null;
     };
 
     templates = mkOption {
-      type = lazyAttrsOf template;
+      type = optCallWith moduleArgs (lazyAttrsOf template);
       default = { };
     };
   };

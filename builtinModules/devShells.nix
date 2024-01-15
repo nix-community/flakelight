@@ -10,7 +10,7 @@ let
   inherit (lib.types) coercedTo functionTo lazyAttrsOf lines listOf nullOr
     package str submodule;
   inherit (flakelight) supportedSystem;
-  inherit (flakelight.types) function optFunctionTo packageDef;
+  inherit (flakelight.types) function optCallWith optFunctionTo packageDef;
 
   devShellModule.options = {
     inputsFrom = mkOption {
@@ -59,7 +59,7 @@ in
     };
 
     devShells = mkOption {
-      type = lazyAttrsOf packageDef;
+      type = optCallWith moduleArgs (lazyAttrsOf packageDef);
       default = { };
     };
   };

@@ -2,14 +2,15 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, ... }:
+{ config, lib, flakelight, moduleArgs, ... }:
 let
   inherit (lib) mkOption mkIf;
   inherit (lib.types) attrsOf raw;
+  inherit (flakelight.types) optCallWith;
 in
 {
   options.lib = mkOption {
-    type = attrsOf raw;
+    type = optCallWith moduleArgs (attrsOf raw);
     default = { };
   };
 

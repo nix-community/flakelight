@@ -8,7 +8,7 @@ let
   inherit (lib) foldl mapAttrsToList mkOption mkIf recursiveUpdate;
   inherit (lib.types) attrs lazyAttrsOf;
   inherit (flakelight) selectAttr;
-  inherit (flakelight.types) optFunctionTo;
+  inherit (flakelight.types) optCallWith;
 
   isHome = x: x ? activationPackage;
 
@@ -29,14 +29,12 @@ let
   );
 
   configs = mapAttrs
-    (name: f:
-      let val = f moduleArgs; in
-      if isHome val then val else mkHome name val)
+    (name: cfg: if isHome cfg then cfg else mkHome name cfg)
     config.homeConfigurations;
 in
 {
   options.homeConfigurations = mkOption {
-    type = lazyAttrsOf (optFunctionTo attrs);
+    type = lazyAttrsOf (optCallWith moduleArgs attrs);
     default = { };
   };
 

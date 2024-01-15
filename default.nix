@@ -92,6 +92,9 @@ let
 
     optFunctionTo = elemType: coercedTo elemType (x: _: x)
       (functionTo elemType);
+
+    optCallWith = args: elemType: coercedTo (functionTo elemType) (x: x args)
+      elemType;
   };
 
   supportedSystem = { lib, stdenv, ... }:

@@ -8,7 +8,7 @@ let
   inherit (lib) foldl mapAttrsToList mkIf mkOption recursiveUpdate;
   inherit (lib.types) attrs lazyAttrsOf;
   inherit (flakelight) selectAttr;
-  inherit (flakelight.types) optFunctionTo;
+  inherit (flakelight.types) optCallWith;
 
   # Avoid checking if toplevel is a derivation as it causes the nixos modules
   # to be evaluated.
@@ -23,14 +23,12 @@ let
   });
 
   configs = mapAttrs
-    (hostname: f:
-      let val = f moduleArgs; in
-      if isNixos val then val else mkNixos hostname val)
+    (hostname: cfg: if isNixos cfg then cfg else mkNixos hostname cfg)
     config.nixosConfigurations;
 in
 {
   options.nixosConfigurations = mkOption {
-    type = lazyAttrsOf (optFunctionTo attrs);
+    type = lazyAttrsOf (optCallWith moduleArgs attrs);
     default = { };
   };
 

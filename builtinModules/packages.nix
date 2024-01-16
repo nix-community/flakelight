@@ -4,15 +4,27 @@
 
 { config, lib, inputs, flakelight, genSystems, moduleArgs, ... }:
 let
-  inherit (builtins) parseDrvName tryEval;
-  inherit (lib) filterAttrs findFirst mapAttrs mapAttrs' mkIf mkMerge mkOption
-    nameValuePair optionalAttrs;
+  inherit (builtins) hasAttr parseDrvName tryEval;
+  inherit (lib) filterAttrs findFirst functionArgs mapAttrs' mapAttrs mkIf
+    mkMerge mkOption nameValuePair optionalAttrs;
   inherit (lib.types) lazyAttrsOf nullOr str uniq;
   inherit (flakelight) supportedSystem;
   inherit (flakelight.types) optCallWith overlay packageDef;
 
-  genPkg = pkgs: pkg: pkgs.callPackage pkg { };
-  genPkgs = pkgs: mapAttrs (_: genPkg pkgs) config.packages;
+  genPkg = final: prev: name: pkg:
+    let
+      dependsOnSelf = hasAttr name (functionArgs pkg);
+      dependsOnPkgs = (functionArgs pkg) ? pkgs;
+      selfOverride = {
+        ${name} = prev.${name} or
+          (throw "${name} depends on ${name}, but no existing ${name}.");
+      };
+      overrides = optionalAttrs dependsOnSelf selfOverride
+        // optionalAttrs dependsOnPkgs { pkgs = final.pkgs // selfOverride; };
+    in
+    final.callPackage pkg overrides;
+  genPkgs = final: prev: pkgs:
+    mapAttrs (name: genPkg final prev name) pkgs;
 in
 {
   options = {
@@ -61,13 +73,16 @@ in
               (getName (import inputs.nixpkgs {
                 inherit (prev.stdenv.hostPlatform) system;
                 inherit (config.nixpkgs) config;
-                overlays = config.withOverlays ++ [ (final: _: genPkgs final) ];
+                overlays = config.withOverlays ++
+                  [ (final: prev: genPkgs final prev config.packages) ];
               }).default)
             ];
         in
-        (optionalAttrs (config.packages ? default) {
-          ${defaultPkgName} = genPkg final config.packages.default;
-        }) // genPkgs final;
+        (optionalAttrs (config.packages ? default) rec {
+          default = genPkg final prev defaultPkgName
+            config.packages.default;
+          ${defaultPkgName} = default;
+        }) // genPkgs final prev (removeAttrs config.packages [ "default" ]);
 
       overlay = final: prev: removeAttrs
         (config.packageOverlay (final.appendOverlays config.withOverlays) prev)

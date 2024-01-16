@@ -170,6 +170,12 @@ in
     })
     (f: import f.packages.x86_64-linux.default);
 
+  package-prevent-recursion = test
+    (flakelight ./empty {
+      package = { hello }: hello;
+    })
+    (f: f.packages.aarch64-linux.default.pname == "hello");
+
   package = test
     (flakelight ./empty {
       package = { stdenv }:

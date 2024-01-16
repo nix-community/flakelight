@@ -59,8 +59,6 @@ in
       packageOverlay = final: prev:
         let
           getName = pkg: pkg.pname or (parseDrvName pkg.name).name;
-          inherit (prev.stdenv.hostPlatform) system;
-          baseNixpkgs = inputs.nixpkgs.legacyPackages.${system};
           mockPkgs = import ../misc/nameMockedPkgs.nix prev;
 
           defaultPkgName = findFirst (x: (tryEval x).success)
@@ -69,7 +67,6 @@ in
             [
               (assert config.pname != null; config.pname)
               (getName (mockPkgs.callPackage config.packages.default { }))
-              (getName (baseNixpkgs.callPackage config.packages.default { }))
               (getName (import inputs.nixpkgs {
                 inherit (prev.stdenv.hostPlatform) system;
                 inherit (config.nixpkgs) config;

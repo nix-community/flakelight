@@ -42,7 +42,7 @@ system. `systems` can be set to change configured systems from the default.
 ```nix
 {
   inputs.flakelight.url = "github:nix-community/flakelight";
-  outputs = { flakelight, ... }
+  outputs = { flakelight, ... }:
     flakelight ./. {
       devShell.packages = pkgs: [ pkgs.hello pkgs.coreutils ];
     };

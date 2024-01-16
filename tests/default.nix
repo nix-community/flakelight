@@ -170,6 +170,12 @@ in
     })
     (f: import f.packages.x86_64-linux.default);
 
+  package-no-named-args = test
+    (flakelight ./empty {
+      package = pkgs: pkgs.hello;
+    })
+    (f: f.packages.aarch64-linux.default.pname == "hello");
+
   package-prevent-recursion = test
     (flakelight ./empty {
       package = { hello }: hello;

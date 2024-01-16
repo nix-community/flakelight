@@ -14,6 +14,7 @@ let
       fargs = lib.functionArgs f;
       mock = lib.mapAttrs (_: _: throw "") (lib.filterAttrs (_: v: !v) fargs);
     in
+    assert fargs != { };
     f (mock // builtins.intersectAttrs fargs autoArgs // args);
 
   mockStdenv = real: stdenv: real.${stdenv} or (throw "") // {
@@ -22,7 +23,6 @@ let
   };
 in
 lib.fix (self: {
-  pkgs = self;
   lib = lib // { inherit callPackageWith; };
 
   callPackage = callPackageWith self;

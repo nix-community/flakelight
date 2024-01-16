@@ -13,8 +13,11 @@ let
 
   genPkg = final: prev: name: pkg:
     let
+      args = functionArgs pkg;
+      noArgs = args == { };
+      pkg' = if noArgs then { pkgs }: pkg pkgs else pkg;
       dependsOnSelf = hasAttr name (functionArgs pkg);
-      dependsOnPkgs = (functionArgs pkg) ? pkgs;
+      dependsOnPkgs = noArgs || (args ? pkgs);
       selfOverride = {
         ${name} = prev.${name} or
           (throw "${name} depends on ${name}, but no existing ${name}.");
@@ -22,7 +25,7 @@ let
       overrides = optionalAttrs dependsOnSelf selfOverride
         // optionalAttrs dependsOnPkgs { pkgs = final.pkgs // selfOverride; };
     in
-    final.callPackage pkg overrides;
+    final.callPackage pkg' overrides;
   genPkgs = final: prev: pkgs:
     mapAttrs (name: genPkg final prev name) pkgs;
 in

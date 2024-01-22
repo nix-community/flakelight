@@ -17,7 +17,7 @@ let
     assert fargs != { };
     f (mock // builtins.intersectAttrs fargs autoArgs // args);
 
-  mockStdenv = real: stdenv: real.${stdenv} or (throw "") // {
+  mockStdenv = builtins.mapAttrs (_: _: throw "") real.stdenv // {
     mkDerivation = args:
       if lib.isFunction args then lib.fix args else args;
   };
@@ -27,18 +27,18 @@ lib.fix (self: {
 
   callPackage = callPackageWith self;
 
-  stdenv = mockStdenv real "stdenv";
-  stdenvNoCC = mockStdenv real "stdenvNoCC";
-  stdenv_32bit = mockStdenv real "stdenv_32bit";
-  stdenvNoLibs = mockStdenv real "stdenvNoLibs";
-  libcxxStdenv = mockStdenv real "libcxxStdenv";
-  gccStdenv = mockStdenv real "gccStdenv";
-  gccStdenvNoLibs = mockStdenv real "gccStdenvNoLibs";
-  gccMultiStdenv = mockStdenv real "gccMultiStdenv";
-  clangStdenv = mockStdenv real "clangStdenv";
-  clangStdenvNoLibs = mockStdenv real "clangStdenvNoLibs";
-  clangMultiStdenv = mockStdenv real "clangMultiStdenv";
-  ccacheStdenv = mockStdenv real "ccacheStdenv";
+  stdenv = mockStdenv;
+  stdenvNoCC = mockStdenv;
+  stdenv_32bit = mockStdenv;
+  stdenvNoLibs = mockStdenv;
+  libcxxStdenv = mockStdenv;
+  gccStdenv = mockStdenv;
+  gccStdenvNoLibs = mockStdenv;
+  gccMultiStdenv = mockStdenv;
+  clangStdenv = mockStdenv;
+  clangStdenvNoLibs = mockStdenv;
+  clangMultiStdenv = mockStdenv;
+  ccacheStdenv = mockStdenv;
 
   runCommandWith = args: _: args;
   runCommand = name: _: _: { inherit name; };

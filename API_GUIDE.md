@@ -711,6 +711,44 @@ For example:
 }
 ```
 
+### legacyPackages
+
+```
+Type: Pkgs -> Pkgs
+```
+
+The `legacyPackages` option allows you to configure the flake's `legacyPackges`
+output. It can be set to a function that takes the package set and returns the
+package set to be used as the corresponding system's legacyPackages output.
+
+For example:
+
+```nix
+{
+  inputs = {
+    flakelight.url = "github:nix-community/flakelight";
+    nixpkgs.url = "nixpkgs/nixpkgs-unstable";
+  };
+  outputs = { flakelight, nixpkgs, ... }:
+    flakelight ./. {
+      legacyPackages = pkgs: nixpkgs.legacyPackages.${pkgs.system};
+    };
+}
+```
+
+To export the package set used for calling package definitions and other options
+that take functions passed the package set, you can do the following:
+
+```nix
+{
+  inputs.flakelight.url = "github:nix-community/flakelight";
+  outputs = { flakelight, ... }:
+    flakelight ./. {
+      legacyPackages = pkgs: pkgs;
+    };
+}
+```
+
 ### formatter
 
 ```

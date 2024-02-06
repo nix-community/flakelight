@@ -287,6 +287,22 @@ in
     })
     (f: (import f.packages.x86_64-linux.pkg2));
 
+  legacyPackages-set-pkgs = test
+    (flakelight ./empty {
+      inputs = { inherit nixpkgs; };
+      legacyPackages = pkgs: pkgs;
+    })
+    (f: f.legacyPackages.x86_64-linux.hello
+      == nixpkgs.legacyPackages.x86_64-linux.hello);
+
+  legacyPackages-set-nixpkgs = test
+    (flakelight ./empty {
+      inputs = { inherit nixpkgs; };
+      legacyPackages = pkgs: nixpkgs.legacyPackages.${pkgs.system};
+    })
+    (f: f.legacyPackages.x86_64-linux.hello
+      == nixpkgs.legacyPackages.x86_64-linux.hello);
+
   devShell = test
     (flakelight ./empty {
       devShell = {

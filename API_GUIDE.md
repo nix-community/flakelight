@@ -541,12 +541,36 @@ To override the devShell, you can use a package definition as such:
 ### devShells
 
 ```
-Type: (AttrsOf PackageDef) | (ModuleArgs -> (AttrsOf PackageDef))
+Type:
+  devShells: (AttrsOf (PackageDef | Cfg | (Pkgs -> Cfg)) |
+             (ModuleArgs -> (AttrsOf (PackageDef | Cfg | (Pkgs -> Cfg))))
+  Cfg.packages: [Derivation] | (Pkgs -> [Derivation])
+  Cfg.inputsFrom: [Derivation] | (Pkgs -> [Derivation])
+  Cfg.shellHook: Str | (Pkgs -> Str)
+  Cfg.env: (AttrsOf Str) | (Pkgs -> (AttrsOf Str))
+  Cfg.stdenv: Stdenv | (Pkgs -> Stdenv)
 ```
 
-The `devShells` option allows you to set additional `devShell` outputs.
+The `devShells` option allows you to set additional `devShell` outputs. The
+values each shell can be set to are the same as described above for the
+`devShell` option.
 
-For example:
+For example, using the configuration options:
+
+```nix
+{
+  inputs.flakelight.url = "github:nix-community/flakelight";
+  outputs = { flakelight, ... }:
+    flakelight ./. {
+      devShells.testing = {
+        packages = pkgs: [ pkgs.coreutils ];
+        env.TEST_VAR = "in testing shell";
+      };
+    };
+}
+```
+
+For example, using a package definition:
 
 ```nix
 {
@@ -562,7 +586,7 @@ For example:
 }
 ```
 
-The above exports `devShells.${system}.testing` outputs.
+The above flakes export `devShells.${system}.testing` outputs.
 
 ### overlays
 

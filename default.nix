@@ -94,8 +94,7 @@ let
     optFunctionTo = elemType: coercedTo elemType (x: _: x)
       (functionTo elemType);
 
-    optCallWith = args: elemType: coercedTo (functionTo elemType) (x: x args)
-      elemType;
+    optCallWith = args: elemType: coercedTo function (x: x args) elemType;
 
     nullable = elemType: mkOptionType {
       name = "nullable";

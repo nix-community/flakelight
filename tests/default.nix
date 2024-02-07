@@ -370,12 +370,16 @@ in
       devShell.inputsFrom = pkgs: [ pkgs.emacs ];
       devShells = {
         shell1 = { mkShell }: mkShell { };
-        shell2 = { mkShell }: mkShell { };
+        shell2 = { packages = pkgs: [ pkgs.emacs ]; };
+        shell3 = pkgs: { packages = [ pkgs.emacs ]; };
+        shell4 = { emacs, ... }: { packages = [ emacs ]; };
       };
     })
-    (f: (f ? devShells.x86_64-linux.default)
-      && (f ? devShells.x86_64-linux.shell1)
-      && (f ? devShells.x86_64-linux.shell2));
+    (f: (lib.isDerivation f.devShells.x86_64-linux.default)
+      && (lib.isDerivation f.devShells.x86_64-linux.shell1)
+      && (lib.isDerivation f.devShells.x86_64-linux.shell2)
+      && (lib.isDerivation f.devShells.x86_64-linux.shell3)
+      && (lib.isDerivation f.devShells.x86_64-linux.shell4));
 
   devShells-override = test
     (flakelight ./empty {

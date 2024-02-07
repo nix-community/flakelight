@@ -4,13 +4,11 @@
 
 { config, lib, flakelight, genSystems, moduleArgs, ... }:
 let
-  inherit (lib) filterAttrs functionArgs mapAttrs mkDefault mkIf mkMerge
-    mkOption;
+  inherit (lib) filterAttrs functionArgs mapAttrs mkIf mkMerge mkOption;
   inherit (lib.types) attrs coercedTo functionTo lazyAttrsOf lines listOf
     package str submodule;
   inherit (flakelight) supportedSystem;
-  inherit (flakelight.types) function nullable optCallWith optFunctionTo
-    packageDef;
+  inherit (flakelight.types) function nullable optCallWith optFunctionTo;
 
   devShellModule.options = {
     inputsFrom = mkOption {
@@ -39,48 +37,51 @@ let
     };
 
     overrideShell = mkOption {
-      type = nullable packageDef;
+      type = nullable package;
       internal = true;
       default = null;
     };
   };
 
   wrapFn = fn: pkgs:
-    if (functionArgs fn == { }) || !(package.check (pkgs.callPackage fn { }))
+    let val = pkgs.callPackage fn { }; in
+    if (functionArgs fn == { }) || !(package.check val)
     then fn pkgs
-    else { overrideShell = fn; };
+    else { overrideShell = val; };
+
+  devShellType = coercedTo function wrapFn
+    (coercedTo attrs (x: _: x)
+      (functionTo (submodule devShellModule)));
+
+  genDevShell = pkgs: cfg:
+    if cfg.overrideShell != null then cfg.overrideShell
+    else
+      let cfg' = mapAttrs (_: v: v pkgs) cfg; in
+      pkgs.mkShell.override { inherit (cfg') stdenv; }
+        (cfg'.env // { inherit (cfg') inputsFrom packages shellHook; });
 in
 {
   options = {
     devShell = mkOption {
       default = null;
-      type = nullable (coercedTo function wrapFn
-        (coercedTo attrs (x: _: x)
-          (functionTo (submodule devShellModule))));
+      type = nullable devShellType;
     };
 
     devShells = mkOption {
-      type = optCallWith moduleArgs (lazyAttrsOf packageDef);
+      type = optCallWith moduleArgs (lazyAttrsOf devShellType);
       default = { };
     };
   };
 
   config = mkMerge [
     (mkIf (config.devShell != null) {
-      devShells.default = mkDefault ({ pkgs, mkShell }:
-        let cfg = mapAttrs (_: v: v pkgs) (config.devShell pkgs); in
-        mkShell.override { inherit (cfg) stdenv; }
-          (cfg.env // { inherit (cfg) inputsFrom packages shellHook; }));
-    })
-
-    (mkIf (config.devShell.overrideShell or null != null) {
-      devShells.default = config.devShell.overrideShell;
+      devShells.default = config.devShell;
     })
 
     (mkIf (config.devShells != { }) {
       outputs.devShells = genSystems (pkgs:
         filterAttrs (_: supportedSystem pkgs)
-          (mapAttrs (_: v: pkgs.callPackage v { }) config.devShells));
+          (mapAttrs (_: v: genDevShell pkgs (v pkgs)) config.devShells));
     })
   ];
 }

@@ -5,8 +5,8 @@
 { config, lib, flakelight, genSystems, ... }:
 let
   inherit (lib) isFunction mapAttrs mkMerge mkOption mkIf;
-  inherit (lib.types) lazyAttrsOf nullOr;
-  inherit (flakelight.types) function optFunctionTo;
+  inherit (lib.types) lazyAttrsOf;
+  inherit (flakelight.types) function nullable optFunctionTo;
 
   wrapBundler = pkgs: bundler: drv:
     if isFunction (bundler (pkgs // drv))
@@ -16,12 +16,12 @@ in
 {
   options = {
     bundler = mkOption {
-      type = nullOr function;
+      type = nullable function;
       default = null;
     };
 
     bundlers = mkOption {
-      type = nullOr (optFunctionTo (lazyAttrsOf function));
+      type = nullable (optFunctionTo (lazyAttrsOf function));
       default = null;
     };
   };

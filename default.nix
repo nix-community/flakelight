@@ -6,11 +6,12 @@ inputs:
 let
   inherit (inputs) nixpkgs;
   inherit (builtins) isAttrs isPath readDir;
-  inherit (nixpkgs.lib) attrNames composeManyExtensions evalModules filter
+  inherit (nixpkgs.lib) all attrNames composeManyExtensions evalModules filter
     findFirst fix genAttrs getValues hasSuffix isFunction isList mapAttrs
     mapAttrsToList mkDefault mkOptionType pathExists pipe removePrefix
     removeSuffix singleton warn;
-  inherit (nixpkgs.lib.types) coercedTo functionTo listOf;
+  inherit (nixpkgs.lib.types) coercedTo defaultFunctor functionTo listOf
+    optionDescriptionPhrase;
   inherit (nixpkgs.lib.options) mergeEqualOption mergeOneOption;
 
   builtinModules = mapAttrsToList (k: _: ./builtinModules + ("/" + k))
@@ -40,7 +41,7 @@ let
       supportedSystem types;
   };
 
-  types = {
+  types = rec {
     overlay = mkOptionType {
       name = "overlay";
       description = "nixpkgs overlay";
@@ -95,6 +96,25 @@ let
 
     optCallWith = args: elemType: coercedTo (functionTo elemType) (x: x args)
       elemType;
+
+    nullable = elemType: mkOptionType {
+      name = "nullable";
+      description = "nullable ${optionDescriptionPhrase
+        (class: class == "noun" || class == "composite") elemType}";
+      descriptionClass = "noun";
+      check = x: x == null || elemType.check x;
+      merge = loc: defs:
+        if all (def: def.value == null) defs then null
+        else elemType.merge loc (filter (def: def.value != null) defs);
+      emptyValue.value = null;
+      inherit (elemType) getSubOptions getSubModules;
+      substSubModules = m: nullable (elemType.substSubModules m);
+      functor = (defaultFunctor "nullable") // {
+        type = nullable;
+        wrapped = elemType;
+      };
+      nestedTypes = { inherit elemType; };
+    };
   };
 
   supportedSystem = { lib, stdenv, ... }:

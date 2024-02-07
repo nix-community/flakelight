@@ -6,10 +6,11 @@
 let
   inherit (lib) filterAttrs functionArgs mapAttrs mkDefault mkIf mkMerge
     mkOption;
-  inherit (lib.types) attrs coercedTo functionTo lazyAttrsOf lines listOf nullOr
+  inherit (lib.types) attrs coercedTo functionTo lazyAttrsOf lines listOf
     package str submodule;
   inherit (flakelight) supportedSystem;
-  inherit (flakelight.types) function optCallWith optFunctionTo packageDef;
+  inherit (flakelight.types) function nullable optCallWith optFunctionTo
+    packageDef;
 
   devShellModule.options = {
     inputsFrom = mkOption {
@@ -38,7 +39,7 @@ let
     };
 
     overrideShell = mkOption {
-      type = nullOr packageDef;
+      type = nullable packageDef;
       internal = true;
       default = null;
     };
@@ -53,7 +54,7 @@ in
   options = {
     devShell = mkOption {
       default = null;
-      type = nullOr (coercedTo function wrapFn
+      type = nullable (coercedTo function wrapFn
         (coercedTo attrs (x: _: x)
           (functionTo (submodule devShellModule))));
     };

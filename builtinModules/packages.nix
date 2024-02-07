@@ -7,9 +7,9 @@ let
   inherit (builtins) hasAttr parseDrvName tryEval;
   inherit (lib) filterAttrs findFirst functionArgs mapAttrs' mapAttrs mkIf
     mkMerge mkOption nameValuePair optionalAttrs;
-  inherit (lib.types) lazyAttrsOf nullOr str uniq;
+  inherit (lib.types) lazyAttrsOf str uniq;
   inherit (flakelight) supportedSystem;
-  inherit (flakelight.types) optCallWith overlay packageDef;
+  inherit (flakelight.types) nullable optCallWith overlay packageDef;
 
   genPkg = final: prev: name: pkg:
     let
@@ -32,7 +32,7 @@ in
 {
   options = {
     package = mkOption {
-      type = nullOr packageDef;
+      type = nullable packageDef;
       default = null;
     };
 
@@ -42,7 +42,7 @@ in
     };
 
     pname = mkOption {
-      type = nullOr str;
+      type = nullable str;
       default = null;
     };
 

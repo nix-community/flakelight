@@ -6,9 +6,9 @@
 let
   inherit (builtins) isPath isString;
   inherit (lib) mkOption mkOptionType mkIf mkMerge;
-  inherit (lib.types) lazyAttrsOf nullOr;
+  inherit (lib.types) lazyAttrsOf;
   inherit (lib.options) mergeEqualOption;
-  inherit (flakelight.types) optCallWith;
+  inherit (flakelight.types) nullable optCallWith;
 
   template = mkOptionType {
     name = "template";
@@ -23,7 +23,7 @@ in
 {
   options = {
     template = mkOption {
-      type = nullOr (optCallWith moduleArgs template);
+      type = nullable (optCallWith moduleArgs template);
       default = null;
     };
 

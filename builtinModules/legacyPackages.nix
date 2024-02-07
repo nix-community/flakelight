@@ -2,14 +2,15 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, genSystems, ... }:
+{ config, lib, flakelight, genSystems, ... }:
 let
   inherit (lib) mkIf mkOption;
-  inherit (lib.types) functionTo nullOr pkgs;
+  inherit (lib.types) functionTo pkgs;
+  inherit (flakelight.types) nullable;
 in
 {
   options.legacyPackages = mkOption {
-    type = nullOr (functionTo pkgs);
+    type = nullable (functionTo pkgs);
     default = null;
   };
 

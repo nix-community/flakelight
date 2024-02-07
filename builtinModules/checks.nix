@@ -5,8 +5,8 @@
 { config, src, lib, flakelight, genSystems, ... }:
 let
   inherit (lib) isDerivation isFunction mkOption mkIf mapAttrs;
-  inherit (lib.types) lazyAttrsOf nullOr raw;
-  inherit (flakelight.types) optFunctionTo;
+  inherit (lib.types) lazyAttrsOf raw;
+  inherit (flakelight.types) nullable optFunctionTo;
 
   mkCheck = pkgs: name: cmd:
     let cmd' = if isFunction cmd then cmd pkgs else cmd; in
@@ -20,7 +20,7 @@ let
 in
 {
   options.checks = mkOption {
-    type = nullOr (optFunctionTo (lazyAttrsOf raw));
+    type = nullable (optFunctionTo (lazyAttrsOf raw));
     default = null;
   };
 

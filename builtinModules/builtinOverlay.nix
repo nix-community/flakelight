@@ -5,14 +5,15 @@
 { config, src, lib, inputs, outputs, flakelight, moduleArgs, ... }:
 let
   inherit (lib) isList mkOption mkOrder mapAttrs optionalAttrs;
-  inherit (lib.types) listOf nullOr oneOf str;
+  inherit (lib.types) listOf oneOf str;
   inherit (builtins) pathExists;
   inherit (flakelight) selectAttr;
+  inherit (flakelight.types) nullable;
 in
 {
   options = {
     description = mkOption {
-      type = nullOr str;
+      type = nullable str;
       default =
         if pathExists (src + /flake.nix)
         then (import (src + /flake.nix)).description or null
@@ -20,7 +21,7 @@ in
     };
 
     license = mkOption {
-      type = nullOr (oneOf [ str (listOf str) ]);
+      type = nullable (oneOf [ str (listOf str) ]);
       default = null;
     };
   };

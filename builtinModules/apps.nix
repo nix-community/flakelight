@@ -5,8 +5,8 @@
 { config, lib, flakelight, genSystems, ... }:
 let
   inherit (lib) isFunction mapAttrs mkIf mkMerge mkOption;
-  inherit (lib.types) lazyAttrsOf nullOr raw;
-  inherit (flakelight.types) optFunctionTo;
+  inherit (lib.types) lazyAttrsOf raw;
+  inherit (flakelight.types) nullable optFunctionTo;
 
   isApp = x: (x ? type) && (x.type == "app") && (x ? program);
 
@@ -17,12 +17,12 @@ in
 {
   options = {
     app = mkOption {
-      type = nullOr raw;
+      type = nullable raw;
       default = null;
     };
 
     apps = mkOption {
-      type = nullOr (optFunctionTo (lazyAttrsOf raw));
+      type = nullable (optFunctionTo (lazyAttrsOf raw));
       default = null;
     };
   };

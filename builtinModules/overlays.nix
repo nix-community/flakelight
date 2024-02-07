@@ -5,13 +5,13 @@
 { config, lib, flakelight, moduleArgs, ... }:
 let
   inherit (lib) mkMerge mkOption mkIf;
-  inherit (lib.types) lazyAttrsOf nullOr;
-  inherit (flakelight.types) optCallWith overlay;
+  inherit (lib.types) lazyAttrsOf;
+  inherit (flakelight.types) nullable optCallWith overlay;
 in
 {
   options = {
     overlay = mkOption {
-      type = nullOr overlay;
+      type = nullable overlay;
       default = null;
     };
 

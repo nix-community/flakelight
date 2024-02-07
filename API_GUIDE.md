@@ -439,40 +439,43 @@ To use the first example, but manually specify the package name:
 
 ```
 Type:
-  devShell: Cfg | (ModuleArgs -> Cfg) | PackageDef
-  Cfg.packages: Pkgs -> [Derivation]
-  Cfg.inputsFrom: Pkgs -> [Derivation]
+  devShell: Cfg | (Pkgs -> Cfg) | PackageDef
+  Cfg.packages: [Derivation] | (Pkgs -> [Derivation])
+  Cfg.inputsFrom: [Derivation] | (Pkgs -> [Derivation])
   Cfg.shellHook: Str | (Pkgs -> Str)
   Cfg.env: (AttrsOf Str) | (Pkgs -> (AttrsOf Str))
-  Cfg.stdenv: Pkgs -> Stdenv
+  Cfg.stdenv: Stdenv | (Pkgs -> Stdenv)
 ```
 
 The devshell options allow you to configure `devShells.${system}.default`. It is
 split up into options in order to enable multiple modules to contribute to its
 configuration.
 
-The first three correspond to `mkShell` arguments.
+`devShell` can alternatively be set to a package definition, which is then used
+as the default shell, overriding other options.
 
-`devShell.packages` is a function that takes the package set and returns a list
-of packages to add to the shell.
+`devShell` can also be set to a function that takes the package set and returns
+an attrSet of the devShell configuration options.
 
-`devShell.inputsFrom` is a function that takes the package set and returns a
-list of packages whose deps should be in the shell.
+The options available are as follows:
+
+`devShell.packages` is a list of packages to add to the shell. It can optionally
+be a function taking the package set and returning such a list.
+
+`devShell.inputsFrom` is a list of packages whose deps should be in the shell.
+It can optionally be a function taking the package set and returning such a
+list.
 
 `devShell.shellHook` is a string that provides bash code to run in shell
-initialization. It can optionally be a function to such a string in order to
-access packages.
+initialization. It can optionally be a function taking the package set and
+returning such a string.
 
 `devShell.env` is for setting environment variables in the shell. It is an
-attribute set mapping variables to values. It can optionally be a function to
-such an attribute set in order to access packages.
+attribute set mapping variables to values. It can optionally be a function
+taking the package set and returning such an attribute set.
 
-`devShell.stdenv` allows changing the stdenv used for the shell. It is a
-function that takes the package set and returns the stdenv to use.
-
-`devShell` can alternatively be set to a package definition, which is then used
-as the default shell, overriding the above options. It can also be set to a
-function that takes `moduleArgs` and returns an attrSet of the above options.
+`devShell.stdenv` is the stdenv package used for the shell. It can optionally be
+a function takeing the package set and returning the stdenv to use.
 
 For example, these can be configured as follows:
 
@@ -481,18 +484,18 @@ For example, these can be configured as follows:
   inputs.flakelight.url = "github:nix-community/flakelight";
   outputs = { flakelight, ... }:
     flakelight ./. {
-      devShell = {
+      devShell = pkgs: {
         # Include build deps of emacs
-        inputsFrom = pkgs: [ pkgs.emacs ];
+        inputsFrom = [ pkgs.emacs ];
         # Add coreutils to the shell
-        packages = pkgs: [ pkgs.coreutils ];
+        packages = [ pkgs.coreutils ];
         # Add shell hook. Can be a function if you need packages
         shellHook = ''
           echo Welcome to example shell!
         '';
         # Set an environment var. `env` can be an be a function
         env.TEST_VAR = "test value";
-        stdenv = pkgs: pkgs.clangStdenv;
+        stdenv = pkgs.clangStdenv;
       };
     };
 }
@@ -516,6 +519,20 @@ To add the build inputs of one of your packages, you can do as follows:
         };
       devShell = {
         inputsFrom = pkgs: [ pkgs.pkg1 ];
+      };
+    };
+}
+```
+
+To override the devShell, you can use a package definition as such:
+
+```nix
+{
+  inputs.flakelight.url = "github:nix-community/flakelight";
+  outputs = { flakelight, ... }:
+    flakelight ./. {
+      devShell = { mkShell, hello }: mkShell {
+        pacakges = [ hello ];
       };
     };
 }

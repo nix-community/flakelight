@@ -337,6 +337,34 @@ in
     })
     (f: lib.isDerivation f.devShells.x86_64-linux.default);
 
+  devShell-pkgs-arg = test
+    (flakelight ./empty {
+      devShell = pkgs: {
+        inputsFrom = [ pkgs.emacs ];
+        packages = [ pkgs.coreutils ];
+        shellHook = ''
+          echo Welcome to example shell!
+        '';
+        env.TEST_VAR = "test value";
+        stdenv = pkgs.clangStdenv;
+      };
+    })
+    (f: lib.isDerivation f.devShells.x86_64-linux.default);
+
+  devShell-pkgs-arg-set = test
+    (flakelight ./empty {
+      devShell = { emacs, coreutils, clangStdenv, ... }: {
+        inputsFrom = [ emacs ];
+        packages = [ coreutils ];
+        shellHook = ''
+          echo Welcome to example shell!
+        '';
+        env.TEST_VAR = "test value";
+        stdenv = clangStdenv;
+      };
+    })
+    (f: lib.isDerivation f.devShells.x86_64-linux.default);
+
   devShells = test
     (flakelight ./empty {
       devShell.inputsFrom = pkgs: [ pkgs.emacs ];

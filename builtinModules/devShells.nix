@@ -4,23 +4,22 @@
 
 { config, lib, flakelight, genSystems, moduleArgs, ... }:
 let
-  inherit (builtins) attrNames hasAttr;
-  inherit (lib) all filterAttrs functionArgs mapAttrs mkDefault mkIf mkMerge
+  inherit (lib) filterAttrs functionArgs mapAttrs mkDefault mkIf mkMerge
     mkOption;
-  inherit (lib.types) coercedTo functionTo lazyAttrsOf lines listOf nullOr
+  inherit (lib.types) attrs coercedTo functionTo lazyAttrsOf lines listOf nullOr
     package str submodule;
   inherit (flakelight) supportedSystem;
   inherit (flakelight.types) function optCallWith optFunctionTo packageDef;
 
   devShellModule.options = {
     inputsFrom = mkOption {
-      type = functionTo (listOf package);
-      default = _: [ ];
+      type = optFunctionTo (listOf package);
+      default = [ ];
     };
 
     packages = mkOption {
-      type = functionTo (listOf package);
-      default = _: [ ];
+      type = optFunctionTo (listOf package);
+      default = [ ];
     };
 
     shellHook = mkOption {
@@ -34,7 +33,7 @@ let
     };
 
     stdenv = mkOption {
-      type = functionTo package;
+      type = optFunctionTo package;
       default = pkgs: pkgs.stdenv;
     };
 
@@ -45,17 +44,18 @@ let
     };
   };
 
-  moduleFromFn = fn:
-    if all (a: hasAttr a moduleArgs) (attrNames (functionArgs fn))
-    then fn moduleArgs
+  wrapFn = fn: pkgs:
+    if (functionArgs fn == { }) || !(package.check (pkgs.callPackage fn { }))
+    then fn pkgs
     else { overrideShell = fn; };
 in
 {
   options = {
     devShell = mkOption {
       default = null;
-      type = nullOr (coercedTo function moduleFromFn
-        (submodule devShellModule));
+      type = nullOr (coercedTo function wrapFn
+        (coercedTo attrs (x: _: x)
+          (functionTo (submodule devShellModule))));
     };
 
     devShells = mkOption {
@@ -67,7 +67,7 @@ in
   config = mkMerge [
     (mkIf (config.devShell != null) {
       devShells.default = mkDefault ({ pkgs, mkShell }:
-        let cfg = mapAttrs (_: v: v pkgs) config.devShell; in
+        let cfg = mapAttrs (_: v: v pkgs) (config.devShell pkgs); in
         mkShell.override { inherit (cfg) stdenv; }
           (cfg.env // { inherit (cfg) inputsFrom packages shellHook; }));
     })

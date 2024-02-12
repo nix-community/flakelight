@@ -98,5 +98,9 @@ in
           packages;
       };
     })
+
+    (mkIf (config.packages ? default) {
+      devShell.inputsFrom = pkgs: [ pkgs.default ];
+    })
   ];
 }

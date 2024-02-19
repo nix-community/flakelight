@@ -4,6 +4,7 @@
 
 { config, src, lib, flakelight, genSystems, ... }:
 let
+  inherit (builtins) all hasContext;
   inherit (lib) mkDefault mkMerge mkOption mkIf mapAttrsToList;
   inherit (lib.types) functionTo lazyAttrsOf package str;
   inherit (flakelight.types) nullable optFunctionTo;
@@ -29,19 +30,23 @@ in
       outputs.formatter = mkDefault (genSystems
         ({ pkgs, lib, fd, coreutils, ... }:
           let
+            inherit (lib) attrValues makeBinPath;
+            formatters = config.formatters pkgs;
+            fullContext = all hasContext (attrValues formatters);
             packages =
               if config.devShell == null then [ ]
               else (config.devShell pkgs).packages pkgs;
+            caseArms = toString (mapAttrsToList
+              (n: v: "\n      ${n}) ${v} \"$f\" & ;;")
+              formatters);
           in
           pkgs.writeShellScriptBin "formatter" ''
-            PATH=${lib.makeBinPath packages}
+            PATH=${if fullContext then "" else makeBinPath packages}
             for f in "$@"; do
               if [ -d "$f" ]; then
                 ${fd}/bin/fd "$f" -Htf -x "$0" &
               else
-                case "$(${coreutils}/bin/basename "$f")" in
-                  ${toString (mapAttrsToList
-                    (n: v: "${n}) ${v} \"$f\" & ;;") (config.formatters pkgs))}
+                case "$(${coreutils}/bin/basename "$f")" in${caseArms}
                 esac
               fi
             done &>/dev/null

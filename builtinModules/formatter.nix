@@ -28,8 +28,13 @@ in
     (mkIf (config.formatters != null) {
       outputs.formatter = mkDefault (genSystems
         ({ pkgs, lib, fd, coreutils, ... }:
+          let
+            packages =
+              if config.devShell == null then [ ]
+              else (config.devShell pkgs).packages pkgs;
+          in
           pkgs.writeShellScriptBin "formatter" ''
-            PATH=${lib.makeBinPath (config.devShell.packages or (_: [ ]) pkgs)}
+            PATH=${lib.makeBinPath packages}
             for f in "$@"; do
               if [ -d "$f" ]; then
                 ${fd}/bin/fd "$f" -Htf -x "$0" &

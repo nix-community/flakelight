@@ -4,7 +4,7 @@
 
 { config, lib, ... }:
 let
-  inherit (lib) mkEnableOption mkIf;
+  inherit (lib) mkDefault mkEnableOption mkIf;
 in
 {
   options.flakelight.builtinFormatters =
@@ -23,11 +23,11 @@ in
         prettier = "${pkgs.nodePackages.prettier}/bin/prettier --write";
       in
       {
-        "*.nix" = nixpkgs-fmt;
-        "*.md" = prettier;
-        "*.json" = prettier;
-        "*.yaml" = prettier;
-        "*.yml" = prettier;
+        "*.nix" = mkDefault nixpkgs-fmt;
+        "*.md" = mkDefault prettier;
+        "*.json" = mkDefault prettier;
+        "*.yaml" = mkDefault prettier;
+        "*.yml" = mkDefault prettier;
       };
   };
 }

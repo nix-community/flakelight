@@ -683,9 +683,8 @@ Types:
 The `app` and `apps` options allow you to set `apps.${system}` outputs.
 
 `apps` is an attribute set of apps or a function that takes packages and returns
-an attribute set of apps. If the app value is not an app, it is converted to a
-string and set as the program attr of an app. If it is a function, it is passed
-packages.
+an attribute set of apps. If the app value is a function, it is passed packages.
+If the app value or function result is a string, it is converted to an app.
 
 `app` sets `apps.default`.
 
@@ -697,7 +696,6 @@ For example:
   outputs = { flakelight, ... }:
     flakelight ./. {
       apps = {
-        shell = "/bin/sh";
         emacs = pkgs: "${pkgs.emacs}/bin/emacs";
         bash = pkgs: { type = "app"; program = "${pkgs.bash}/bin/bash"; };
       };
@@ -713,7 +711,6 @@ Alternatively, the above can be written as:
   outputs = { flakelight, ... }:
     flakelight ./. {
       apps = { emacs, bash, ... }: {
-        shell = "/bin/sh";
         emacs = "${emacs}/bin/emacs";
         bash = { type = "app"; program = "${bash}/bin/bash"; };
       };

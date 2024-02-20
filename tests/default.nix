@@ -466,11 +466,11 @@ in
   app-string = test
     (flakelight ./empty {
       inputs = { inherit nixpkgs; };
-      app = "/bin/sh";
+      app = "${nixpkgs.legacyPackages.x86_64-linux.hello}/bin/hello";
     })
     (f: (f.apps.x86_64-linux.default == {
       type = "app";
-      program = "/bin/sh";
+      program = "${nixpkgs.legacyPackages.x86_64-linux.hello}/bin/hello";
     }));
 
   app-string-fn = test
@@ -487,16 +487,11 @@ in
     (flakelight ./empty {
       inputs = { inherit nixpkgs; };
       apps = {
-        shell = "/bin/sh";
         emacs = pkgs: "${pkgs.emacs}/bin/emacs";
         bash = pkgs: { type = "app"; program = "${pkgs.bash}/bin/bash"; };
       };
     })
     (f: f.apps.x86_64-linux == {
-      shell = {
-        type = "app";
-        program = "/bin/sh";
-      };
       emacs = {
         type = "app";
         program = "${nixpkgs.legacyPackages.x86_64-linux.emacs}/bin/emacs";

@@ -5,7 +5,7 @@
 { config, lib, flakelight, genSystems, ... }:
 let
   inherit (lib) isStringLike mapAttrs mkIf mkMerge mkOption mkOptionType;
-  inherit (lib.types) coercedTo lazyAttrsOf;
+  inherit (lib.types) coercedTo lazyAttrsOf pathInStore;
   inherit (lib.options) mergeEqualOption;
   inherit (flakelight.types) nullable optFunctionTo;
 
@@ -13,7 +13,8 @@ let
     name = "app";
     description = "flake app";
     descriptionClass = "noun";
-    check = x: (x ? type) && (x.type == "app") && (x ? program);
+    check = x: (x ? type) && (x.type == "app") &&
+      (x ? program) && (pathInStore.check x.program);
     merge = mergeEqualOption;
   };
 

@@ -4,25 +4,40 @@
 
 { config, lib, flakelight, genSystems, ... }:
 let
-  inherit (lib) isFunction mapAttrs mkIf mkMerge mkOption;
-  inherit (lib.types) lazyAttrsOf raw;
+  inherit (lib) isStringLike mapAttrs mkIf mkMerge mkOption mkOptionType;
+  inherit (lib.types) coercedTo lazyAttrsOf;
+  inherit (lib.options) mergeEqualOption;
   inherit (flakelight.types) nullable optFunctionTo;
 
-  isApp = x: (x ? type) && (x.type == "app") && (x ? program);
+  app = mkOptionType {
+    name = "app";
+    description = "flake app";
+    descriptionClass = "noun";
+    check = x: (x ? type) && (x.type == "app") && (x ? program);
+    merge = mergeEqualOption;
+  };
 
-  mkApp = pkgs: app:
-    let app' = if isFunction app then app pkgs else app; in
-    if isApp app' then app' else { type = "app"; program = "${app'}"; };
+  stringLike = mkOptionType {
+    name = "stringLike";
+    description = "string-convertible value";
+    descriptionClass = "noun";
+    check = isStringLike;
+    merge = mergeEqualOption;
+  };
+
+  mkApp = app: { type = "app"; program = "${app}"; };
+
+  appType = optFunctionTo (coercedTo stringLike mkApp app);
 in
 {
   options = {
     app = mkOption {
-      type = nullable raw;
+      type = nullable appType;
       default = null;
     };
 
     apps = mkOption {
-      type = nullable (optFunctionTo (lazyAttrsOf raw));
+      type = nullable (optFunctionTo (lazyAttrsOf appType));
       default = null;
     };
   };
@@ -34,7 +49,7 @@ in
 
     (mkIf (config.apps != null) {
       outputs.apps = genSystems (pkgs:
-        mapAttrs (_: mkApp pkgs) (config.apps pkgs));
+        mapAttrs (_: v: v pkgs) (config.apps pkgs));
     })
   ];
 }

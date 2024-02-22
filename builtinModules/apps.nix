@@ -4,31 +4,58 @@
 
 { config, lib, flakelight, genSystems, ... }:
 let
-  inherit (lib) isStringLike mapAttrs mkIf mkMerge mkOption mkOptionType;
-  inherit (lib.types) coercedTo lazyAttrsOf pathInStore;
-  inherit (lib.options) mergeEqualOption;
-  inherit (flakelight.types) nullable optFunctionTo;
+  inherit (builtins) match storeDir;
+  inherit (lib) defaultFunctor fix isFunction last mapAttrs mergeDefinitions
+    mkIf mkMerge mkOption mkOptionType;
+  inherit (lib.types) coercedTo enum lazyAttrsOf
+    optionDescriptionPhrase pathInStore submodule;
+  inherit (flakelight.types) nullable optFunctionTo stringLike;
 
-  app = mkOptionType {
-    name = "app";
-    description = "flake app";
-    descriptionClass = "noun";
-    check = x: (x ? type) && (x.type == "app") &&
-      (x ? program) && (pathInStore.check x.program);
-    merge = mergeEqualOption;
+  isStorePath = s: match "${storeDir}/[^.][^ \n]*" s != null;
+
+  app = submodule {
+    options = {
+      type = mkOption { type = enum [ "app" ]; default = "app"; };
+      program = mkOption { type = pathInStore // { check = isStorePath; }; };
+    };
   };
 
-  stringLike = mkOptionType {
-    name = "stringLike";
-    description = "string-convertible value";
-    descriptionClass = "noun";
-    check = isStringLike;
-    merge = mergeEqualOption;
-  };
+  mkApp = name: pkgs: s:
+    let s' = "${s}"; in {
+      program =
+        if isStorePath s' then s'
+        else "${pkgs.writeShellScript "app-${name}" s'}";
+    };
 
-  mkApp = app: { type = "app"; program = "${app}"; };
+  parameterize = value: fn: fix fn value;
 
-  appType = optFunctionTo (coercedTo stringLike mkApp app);
+  appType = parameterize app (self': app: (mkOptionType rec {
+    name = "appType";
+    description =
+      let
+        targetDesc = optionDescriptionPhrase
+          (class: class == "noun" || class == "composite")
+          (coercedTo stringLike (abort "") app);
+      in
+      "${targetDesc} or function that evaluates to it";
+    descriptionClass = "composite";
+    check = x: isFunction x || app.check x || stringLike.check x;
+    merge = loc: defs: pkgs:
+      let
+        targetType = coercedTo stringLike (mkApp (last loc) pkgs) app;
+      in
+      (mergeDefinitions loc targetType (map
+        (fn: {
+          inherit (fn) file;
+          value = if isFunction fn.value then fn.value pkgs else fn.value;
+        })
+        defs)).mergedValue;
+    inherit (app) getSubOptions getSubModules;
+    substSubModules = m: self' (app.substSubModules m);
+    functor = (defaultFunctor name) // { wrapped = app; };
+    nestedTypes.coercedType = stringLike;
+    nestedTypes.finalType = app;
+  }));
 in
 {
   options = {

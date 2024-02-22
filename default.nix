@@ -7,8 +7,8 @@ let
   inherit (inputs) nixpkgs;
   inherit (builtins) isAttrs isPath readDir;
   inherit (nixpkgs.lib) all attrNames composeManyExtensions evalModules filter
-    findFirst fix genAttrs getValues hasSuffix isFunction isList mapAttrs
-    mapAttrsToList mkDefault mkOptionType pathExists pipe removePrefix
+    findFirst fix genAttrs getValues hasSuffix isFunction isList isStringLike
+    mapAttrs mapAttrsToList mkDefault mkOptionType pathExists pipe removePrefix
     removeSuffix singleton warn;
   inherit (nixpkgs.lib.types) coercedTo defaultFunctor functionTo listOf
     optionDescriptionPhrase;
@@ -72,6 +72,14 @@ let
       descriptionClass = "noun";
       check = isFunction;
       merge = mergeOneOption;
+    };
+
+    stringLike = mkOptionType {
+      name = "stringLike";
+      description = "string-convertible value";
+      descriptionClass = "noun";
+      check = isStringLike;
+      merge = mergeEqualOption;
     };
 
     module = mkOptionType {

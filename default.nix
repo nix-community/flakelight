@@ -91,8 +91,18 @@ let
 
     optListOf = elemType: coercedTo elemType singleton (listOf elemType);
 
-    optFunctionTo = elemType: coercedTo elemType (x: _: x)
-      (functionTo elemType);
+    optFunctionTo =
+      let
+        nonFunction = mkOptionType {
+          name = "nonFunction";
+          description = "non-function";
+          descriptionClass = "noun";
+          check = x: ! isFunction x;
+          merge = mergeOneOption;
+        };
+      in
+      elemType: coercedTo nonFunction (x: _: x)
+        (functionTo elemType);
 
     optCallWith = args: elemType: coercedTo function (x: x args) elemType;
 

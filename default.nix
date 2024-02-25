@@ -7,9 +7,9 @@ let
   inherit (inputs) nixpkgs;
   inherit (builtins) isAttrs isPath readDir;
   inherit (nixpkgs.lib) all attrNames composeManyExtensions evalModules filter
-    findFirst fix genAttrs getValues hasSuffix isFunction isList isStringLike
-    mapAttrs mapAttrsToList mkDefault mkOptionType pathExists pipe removePrefix
-    removeSuffix singleton warn;
+    findFirst fix genAttrs getValues hasSuffix isDerivation isFunction isList
+    isStringLike mapAttrs mapAttrsToList mkDefault mkOptionType pathExists pipe
+    removePrefix removeSuffix singleton warn;
   inherit (nixpkgs.lib.types) coercedTo defaultFunctor functionTo listOf
     optionDescriptionPhrase;
   inherit (nixpkgs.lib.options) mergeEqualOption mergeOneOption;
@@ -74,6 +74,14 @@ let
       merge = mergeOneOption;
     };
 
+    drv = mkOptionType {
+      name = "drv";
+      description = "derivation";
+      descriptionClass = "noun";
+      check = isDerivation;
+      merge = mergeOneOption;
+    };
+
     stringLike = mkOptionType {
       name = "stringLike";
       description = "string-convertible value";
@@ -98,6 +106,18 @@ let
     };
 
     optListOf = elemType: coercedTo elemType singleton (listOf elemType);
+
+    coercedTo' = coercedType: coerceFunc: finalType:
+      (coercedTo coercedType coerceFunc finalType) // {
+        merge = loc: defs:
+          let
+            coerceVal = val:
+              if finalType.check val then val
+              else coerceFunc val;
+          in
+          finalType.merge loc
+            (map (def: def // { value = coerceVal def.value; }) defs);
+      };
 
     optFunctionTo =
       let

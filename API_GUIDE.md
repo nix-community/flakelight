@@ -439,7 +439,7 @@ To use the first example, but manually specify the package name:
 
 ```
 Type:
-  devShell: Cfg | (Pkgs -> Cfg) | PackageDef
+  devShell: Cfg | (Pkgs -> Cfg) | PackageDef | Derivation | (Pkgs -> Derivation)
   Cfg.packages: [Derivation] | (Pkgs -> [Derivation])
   Cfg.inputsFrom: [Derivation] | (Pkgs -> [Derivation])
   Cfg.shellHook: Str | (Pkgs -> Str)
@@ -451,11 +451,11 @@ The devshell options allow you to configure `devShells.${system}.default`. It is
 split up into options in order to enable multiple modules to contribute to its
 configuration.
 
-`devShell` can alternatively be set to a package definition, which is then used
-as the default shell, overriding other options.
+`devShell` can alternatively be set to a package definition or derivation, which
+is then used as the default shell, overriding other options.
 
 `devShell` can also be set to a function that takes the package set and returns
-an attrSet of the devShell configuration options.
+an attrSet of the devShell configuration options or a derivation.
 
 The options available are as follows:
 

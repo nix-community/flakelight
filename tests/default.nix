@@ -324,13 +324,13 @@ in
     })
     (f: lib.isDerivation f.devShells.x86_64-linux.default);
 
-  devShell-override = test
+  devShell-pkgDef = test
     (flakelight ./empty {
       devShell = { mkShell }: mkShell { };
     })
     (f: lib.isDerivation f.devShells.x86_64-linux.default);
 
-  devShell-override-empty = test
+  devShell-pkgDef-empty = test
     (flakelight ./empty {
       disabledModules = [ "builtinFormatters.nix" ];
       devShell = { mkShell }: mkShell { };
@@ -362,6 +362,19 @@ in
         env.TEST_VAR = "test value";
         stdenv = clangStdenv;
       };
+    })
+    (f: lib.isDerivation f.devShells.x86_64-linux.default);
+
+  devShell-pkg = test
+    (flakelight ./empty ({ inputs, ... }: {
+      systems = [ "x86_64-linux" ];
+      devShell = inputs.nixpkgs.legacyPackages.x86_64-linux.hello;
+    }))
+    (f: lib.isDerivation f.devShells.x86_64-linux.default);
+
+  devShell-pkg-fn = test
+    (flakelight ./empty {
+      devShell = pkgs: pkgs.hello;
     })
     (f: lib.isDerivation f.devShells.x86_64-linux.default);
 

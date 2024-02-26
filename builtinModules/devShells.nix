@@ -47,10 +47,13 @@ let
     let val = pkgs.callPackage fn { }; in
     if (functionArgs fn == { }) || !(package.check val)
     then fn pkgs
-    else { overrideShell = val; };
+    else val;
+
+  packageOverride = p: { overrideShell = p; };
 
   devShellType = coercedTo function wrapFn
-    (optFunctionTo (submodule devShellModule));
+    (optFunctionTo (coercedTo package packageOverride
+      (submodule devShellModule)));
 
   genDevShell = pkgs: cfg:
     if cfg.overrideShell != null then cfg.overrideShell

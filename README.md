@@ -31,6 +31,13 @@ The following modules are also available:
 - [flakelight-zig](https://github.com/accelbread/flakelight-zig)
 - [flakelight-elisp](https://github.com/accelbread/flakelight-elisp)
 
+## Contact
+
+Feel free to ask for help or other questions in the issues/discussions, or reach
+out on Matrix at [#flakelight:nixos.org][matrix-flakelight].
+
+[matrix-flakelight]: https://matrix.to/#/#flakelight:nixos.org
+
 ## Examples
 
 ### Shell

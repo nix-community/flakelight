@@ -27,9 +27,13 @@ See the [API docs](./API_GUIDE.md) for available options and example usage.
 
 The following modules are also available:
 
-- [flakelight-rust](https://github.com/accelbread/flakelight-rust)
-- [flakelight-zig](https://github.com/accelbread/flakelight-zig)
-- [flakelight-elisp](https://github.com/accelbread/flakelight-elisp)
+- [flakelight-rust][] for Rust projects
+- [flakelight-zig][] for Zig projects
+- [flakelight-elisp][] for flakes providing Emacs lisp package(s)
+
+[flakelight-rust]: https://github.com/accelbread/flakelight-rust
+[flakelight-zig]: https://github.com/accelbread/flakelight-zig
+[flakelight-elisp]: https://github.com/accelbread/flakelight-elisp
 
 ## Contact
 

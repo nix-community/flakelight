@@ -73,9 +73,8 @@ To use a different nixpkgs, you can instead use:
     nixpkgs.url = "nixpkgs/nixpkgs-unstable";
     flakelight.url = "github:nix-community/flakelight";
   };
-  outputs = { flakelight, ... }@inputs:
+  outputs = { flakelight, ... }:
     flakelight ./. {
-      inherit inputs;
       devShell.packages = pkgs: [ pkgs.hello pkgs.coreutils ];
     };
 }

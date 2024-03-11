@@ -87,8 +87,31 @@ This section covers the options available to modules.
 Type: AttrsOf FlakeInput
 ```
 
-The `inputs` option allows setting the flake inputs used by modules. To set the
-nixpkgs used for building outputs, you can pass your flake inputs in as follows:
+The `inputs` option is an attrset of the flake inputs used by flakelight
+modules. These inputs get passed as the `inputs` module argument, and are used
+for `inputs` and `inputs'` in the package set.
+
+Default values are automatically initialized from your flake inputs by reading
+your `flake.lock`. Note that this does not include the `self` argument, which
+must be passed explicitly if you want to use it.
+
+Flakelight will add a recent `nixpkgs` input if your flake does not have one.
+Other flakelight modules may provide default inputs for their dependencies.
+
+To use a different nixpkgs from the built-in default:
+
+```nix
+{
+  inputs = {
+    flakelight.url = "github:nix-community/flakelight";
+    nixpkgs.url = "nixpkgs/nixpkgs-unstable";
+  };
+  outputs = { flakelight, ... }:
+    flakelight ./. { };
+}
+```
+
+You can also explicitly pass in inputs, overriding defaults, as follows:
 
 ```nix
 {

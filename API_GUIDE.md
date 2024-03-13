@@ -367,7 +367,7 @@ Types:
 ```
 
 The `package` and `packages` options allow you to add packages. These are
-exported in the `packages.${system}` ouputs, are included in `overlays.default`,
+exported in the `packages.${system}` outputs, are included in `overlays.default`,
 and have build checks in `checks.${system}`.
 
 `package` can be set to a package definition, and will set `packages.default`.
@@ -555,7 +555,7 @@ To override the devShell, you can use a package definition as such:
   outputs = { flakelight, ... }:
     flakelight ./. {
       devShell = { mkShell, hello }: mkShell {
-        pacakges = [ hello ];
+        packages = [ hello ];
       };
     };
 }
@@ -778,7 +778,7 @@ For example:
 Type: Pkgs -> Pkgs
 ```
 
-The `legacyPackages` option allows you to configure the flake's `legacyPackges`
+The `legacyPackages` option allows you to configure the flake's `legacyPackages`
 output. It can be set to a function that takes the package set and returns the
 package set to be used as the corresponding system's legacyPackages output.
 
@@ -957,7 +957,7 @@ access to a `flake` module arg equivalent to `moduleArgs` plus `inputs'` and
 also be available in the NixOS instance's pkgs.
 
 When using the result of calling `nixpkgs.lib.nixosSystem`, the
-`config.propogationModule` value can be used as a NixOS module to gain the above
+`config.propagationModule` value can be used as a NixOS module to gain the above
 benefits.
 
 For example:
@@ -1000,7 +1000,7 @@ to `moduleArgs` plus `inputs'` and `outputs'`. Flakelight's pkgs attributes,
 instance's pkgs.
 
 When using the result of calling `homeManagerConfiguration`, the
-`config.propogationModule` value can be used as a home-manager module to gain
+`config.propagationModule` value can be used as a home-manager module to gain
 the above benefits.
 
 For example:

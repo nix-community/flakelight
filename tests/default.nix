@@ -400,6 +400,14 @@ in
     })
     (f: f ? devShells.x86_64-linux.default);
 
+  devShells-import = test
+    (flakelight ./empty ({ config, ... }: {
+      devShell.inputsFrom = pkgs: [ pkgs.emacs ];
+      devShells.shell1 = pkgs: { imports = [ (config.devShell pkgs) ]; };
+    }))
+    (f: (lib.isDerivation f.devShells.x86_64-linux.default)
+      && (lib.isDerivation f.devShells.x86_64-linux.shell1));
+
   overlay = test
     (flakelight ./empty {
       overlay = final: prev: { testValue = "hello"; };

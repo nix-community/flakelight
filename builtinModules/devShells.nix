@@ -6,7 +6,7 @@
 let
   inherit (lib) filterAttrs functionArgs mapAttrs mkIf mkMerge mkOption;
   inherit (lib.types) coercedTo lazyAttrsOf lines listOf
-    package str submodule;
+    package str submoduleWith;
   inherit (flakelight) supportedSystem;
   inherit (flakelight.types) function nullable optCallWith optFunctionTo;
 
@@ -53,7 +53,7 @@ let
 
   devShellType = coercedTo function wrapFn
     (optFunctionTo (coercedTo package packageOverride
-      (submodule devShellModule)));
+      (submoduleWith { modules = [ devShellModule ]; })));
 
   genDevShell = pkgs: cfg:
     if cfg.overrideShell != null then cfg.overrideShell

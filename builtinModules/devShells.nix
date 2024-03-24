@@ -4,10 +4,9 @@
 
 { config, lib, flakelight, genSystems, moduleArgs, ... }:
 let
-  inherit (lib) filterAttrs functionArgs mapAttrs mkIf mkMerge mkOption;
+  inherit (lib) functionArgs mapAttrs mkIf mkMerge mkOption;
   inherit (lib.types) coercedTo lazyAttrsOf lines listOf
     package str submoduleWith;
-  inherit (flakelight) supportedSystem;
   inherit (flakelight.types) function nullable optCallWith optFunctionTo;
 
   devShellModule.options = {
@@ -82,8 +81,7 @@ in
 
     (mkIf (config.devShells != { }) {
       outputs.devShells = genSystems (pkgs:
-        filterAttrs (_: supportedSystem pkgs)
-          (mapAttrs (_: v: genDevShell pkgs (v pkgs)) config.devShells));
+        mapAttrs (_: v: genDevShell pkgs (v pkgs)) config.devShells);
     })
   ];
 }

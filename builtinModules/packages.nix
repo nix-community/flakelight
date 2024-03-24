@@ -5,10 +5,9 @@
 { config, lib, inputs, flakelight, genSystems, moduleArgs, ... }:
 let
   inherit (builtins) hasAttr parseDrvName tryEval;
-  inherit (lib) filterAttrs findFirst functionArgs mapAttrs' mapAttrs mkIf
-    mkMerge mkOption nameValuePair optionalAttrs;
+  inherit (lib) findFirst functionArgs mapAttrs' mapAttrs mkIf mkMerge mkOption
+    nameValuePair optionalAttrs;
   inherit (lib.types) lazyAttrsOf str uniq;
-  inherit (flakelight) supportedSystem;
   inherit (flakelight.types) nullable optCallWith overlay packageDef;
 
   genPkg = final: prev: name: pkg:
@@ -90,8 +89,7 @@ in
 
       outputs = rec {
         packages = genSystems (pkgs:
-          filterAttrs (_: supportedSystem pkgs)
-            (mapAttrs (k: _: pkgs.${k}) config.packages));
+          mapAttrs (k: _: pkgs.${k}) config.packages);
 
         checks = mapAttrs
           (_: mapAttrs' (n: nameValuePair ("packages-" + n)))

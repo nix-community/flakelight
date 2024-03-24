@@ -37,8 +37,7 @@ let
   };
 
   flakelight = {
-    inherit autoImport autoImportArgs importDir mkFlake selectAttr
-      supportedSystem types;
+    inherit autoImport autoImportArgs importDir mkFlake selectAttr types;
   };
 
   types = rec {
@@ -153,9 +152,6 @@ let
       nestedTypes = { inherit elemType; };
     };
   };
-
-  supportedSystem = { lib, stdenv, ... }:
-    lib.meta.availableOn stdenv.hostPlatform;
 
   importDir = path: genAttrs
     (pipe (readDir path) [

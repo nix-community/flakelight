@@ -18,10 +18,16 @@ in
   config.propagationModule =
     { lib, pkgs, options, config, ... }:
     let inherit (pkgs.stdenv.hostPlatform) system; in {
-      config = (optionalAttrs (options ? nixpkgs.overlays) {
-        # Apply flakelight overlays to NixOS/home-manager configurations
-        nixpkgs.overlays = lib.mkOrder 10
-          (flakeConfig.withOverlays ++ [ flakeConfig.packageOverlay ]);
+      config = (optionalAttrs (options ? nixpkgs) {
+        nixpkgs = (optionalAttrs (options ? nixpkgs.overlays) {
+          # Forward overlays to NixOS/home-manager configurations
+          overlays = lib.mkOrder 10
+            (flakeConfig.withOverlays ++ [ flakeConfig.packageOverlay ]);
+        })
+        // (optionalAttrs (options ? nixpkgs.config) {
+          # Forward nixpkgs.config to NixOS/home-manager configurations
+          inherit (flakeConfig.nixpkgs) config;
+        });
       })
       // (optionalAttrs (options ? home-manager.sharedModules) {
         # Propagate module to home-manager when using its nixos module

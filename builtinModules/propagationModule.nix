@@ -7,24 +7,27 @@
 
 { lib, config, flakelight, moduleArgs, inputs, outputs, ... }:
 let
-  inherit (lib) mapAttrs mkOption optionalAttrs;
+  inherit (lib) mapAttrs mkOption optional optionalAttrs;
   inherit (flakelight) selectAttr;
   inherit (flakelight.types) module;
+  flakeConfig = config;
 in
 {
   options.propagationModule = mkOption { type = module; internal = true; };
 
   config.propagationModule =
-    { lib, pkgs, options, ... }:
+    { lib, pkgs, options, config, ... }:
     let inherit (pkgs.stdenv.hostPlatform) system; in {
       config = (optionalAttrs (options ? nixpkgs.overlays) {
         # Apply flakelight overlays to NixOS/home-manager configurations
         nixpkgs.overlays = lib.mkOrder 10
-          (config.withOverlays ++ [ config.packageOverlay ]);
+          (flakeConfig.withOverlays ++ [ flakeConfig.packageOverlay ]);
       })
       // (optionalAttrs (options ? home-manager.sharedModules) {
         # Propagate module to home-manager when using its nixos module
-        home-manager.sharedModules = [ config.propagationModule ];
+        home-manager.sharedModules =
+          optional (! config.home-manager.useGlobalPkgs)
+            [ flakeConfig.propagationModule ];
       })
       // {
         # Give access to flakelight module args under `flake` arg.

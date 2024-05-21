@@ -93,7 +93,9 @@ for `inputs` and `inputs'` in the package set.
 
 Default values are automatically initialized from your flake inputs by reading
 your `flake.lock`. Note that this does not include the `self` argument, which
-must be passed explicitly if you want to use it.
+must be passed explicitly if you want to use it. The default values also are not
+affected by nix command flags like `--override-input`, so inputs should be
+passed to enable full CLI functionality.
 
 Flakelight will add a recent `nixpkgs` input if your flake does not have one.
 Other flakelight modules may provide default inputs for their dependencies.

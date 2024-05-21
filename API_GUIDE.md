@@ -196,7 +196,8 @@ For a given option, the following is checked in order:
 - Else if `${nixDir}/option` is a directory, it results in an attrset with an
   attr for each importable item in the directory for which the values are the
   corresponding items imported. An importable item is a file ending with `.nix`
-  or a directory containing a `default.nix`.
+  or a directory containing a `default.nix`. This is the same as the flakelight
+  `importDir` function.
 
 To enable using a directory for an attrset that includes a `default` attribute,
 attr names can be escaped with an underscore. For example,
@@ -204,10 +205,13 @@ attr names can be escaped with an underscore. For example,
 
 Aliases for options can be set with the `nixDirAliases` option. For example,
 by default `nixDirAliases.nixosConfigurations = [ "nixos" ];` is set which means
-"nixos" can be used instead of "nixosConfiguraions" for loading the files as
+"nixos" can be used instead of "nixosConfigurations" for loading the files as
 described above.
 
 All options except for `nixDir` and `_module` can be configured this way.
+
+To apply transformations on the output of an autoloaded directory, you can use
+`option/default.nix` and load the directory with `flakelight.importDir`.
 
 ### outputs
 

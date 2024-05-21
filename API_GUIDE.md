@@ -109,19 +109,6 @@ To use a different nixpkgs from the built-in default:
     nixpkgs.url = "nixpkgs/nixpkgs-unstable";
   };
   outputs = { flakelight, ... }:
-    flakelight ./. { };
-}
-```
-
-You can also explicitly pass in inputs, overriding defaults, as follows:
-
-```nix
-{
-  inputs = {
-    nixpkgs.url = "nixpkgs/nixpkgs-unstable";
-    flakelight.url = "github:nix-community/flakelight";
-  };
-  outputs = { flakelight, ... }@inputs:
     flakelight ./. {
       inherit inputs;
     };

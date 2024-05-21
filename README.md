@@ -75,6 +75,7 @@ To use a different nixpkgs, you can instead use:
   };
   outputs = { flakelight, ... }:
     flakelight ./. {
+      inherit inputs;
       devShell.packages = pkgs: [ pkgs.hello pkgs.coreutils ];
     };
 }

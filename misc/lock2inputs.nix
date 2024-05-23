@@ -43,4 +43,4 @@ let
 
   resolved = mapAttrs (_: resolveNode) nodes;
 in
-mapAttrs (_: v: resolved.${v}) rootNode.inputs
+mapAttrs (_: getInput) rootNode.inputs

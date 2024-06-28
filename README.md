@@ -70,7 +70,7 @@ To use a different nixpkgs, you can instead use:
 ```nix
 {
   inputs = {
-    nixpkgs.url = "nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flakelight.url = "github:nix-community/flakelight";
   };
   outputs = { flakelight, ... }@inputs:

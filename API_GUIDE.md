@@ -106,7 +106,7 @@ To use a different nixpkgs from the built-in default (passing all inputs):
 {
   inputs = {
     flakelight.url = "github:nix-community/flakelight";
-    nixpkgs.url = "nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
   outputs = { flakelight, ... }@inputs:
     flakelight ./. {
@@ -120,7 +120,7 @@ Or to just pass just the nixpkgs input:
 ```nix
 {
   inputs = {
-    nixpkgs.url = "nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flakelight.url = "github:nix-community/flakelight";
   };
   outputs = { flakelight, nixpkgs, ... }:
@@ -803,7 +803,7 @@ For example:
 {
   inputs = {
     flakelight.url = "github:nix-community/flakelight";
-    nixpkgs.url = "nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
   outputs = { flakelight, nixpkgs, ... }:
     flakelight ./. {

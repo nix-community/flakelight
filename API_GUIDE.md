@@ -365,7 +365,9 @@ and have build checks in `checks.${system}`.
 
 `package` can be set to a package definition, and will set `packages.default`.
 
-`packages` can be set to attrs of package definitions.
+`packages` can be set to attrs of package definitions. If it is a function, it
+will additionally get a `system` arg in addition to module args, to allow
+conditionally including package definitions depending on the system.
 
 By default, the `packages.default` package's name (its attribute name in
 the package set and overlay) is automatically determined from the derivation's
@@ -447,6 +449,26 @@ To use the first example, but manually specify the package name:
           src = ./.;
           installPhase = "make DESTDIR=$out install";
         };
+    };
+}
+```
+
+To add a package only for certain systems, you can take `system` as an arg as
+follows:
+
+```nix
+{
+  inputs.flakelight.url = "github:nix-community/flakelight";
+  outputs = { flakelight, ... }:
+    flakelight ./. {
+      packages = { system, ... }: if (system == "x86_64-linux") then {
+        pkg1 = { stdenv }:
+          stdenv.mkDerivation {
+            name = "pkg1";
+            src = ./.;
+            installPhase = "make DESTDIR=$out install";
+          };
+      } else { };
     };
 }
 ```

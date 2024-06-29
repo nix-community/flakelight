@@ -287,6 +287,20 @@ in
     })
     (f: (import f.packages.x86_64-linux.pkg2));
 
+  packages-fn-has-system = test
+    (flakelight ./empty {
+      packages = { system, ... }: (if system == "x86_64-linux" then {
+        default = { stdenv }:
+          stdenv.mkDerivation {
+            name = "pkg1";
+            src = ./empty;
+            installPhase = "echo true > $out";
+          };
+      } else { });
+    })
+    (f: (import f.packages.x86_64-linux.default)
+      && !(f.packages.aarch64-linux ? default));
+
   legacyPackages-set-pkgs = test
     (flakelight ./empty {
       inputs = { inherit nixpkgs; };

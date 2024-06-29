@@ -6,9 +6,9 @@
 let
   inherit (builtins) hasAttr parseDrvName tryEval;
   inherit (lib) findFirst functionArgs mapAttrs' mapAttrs mkIf mkMerge mkOption
-    nameValuePair optionalAttrs;
+    nameValuePair optionalAttrs optionals;
   inherit (lib.types) lazyAttrsOf str uniq;
-  inherit (flakelight.types) nullable optCallWith overlay packageDef;
+  inherit (flakelight.types) nullable optFunctionTo overlay packageDef;
 
   genPkg = final: prev: name: pkg:
     let
@@ -27,6 +27,8 @@ let
     final.callPackage pkg' overrides;
   genPkgs = final: prev: pkgs:
     mapAttrs (name: genPkg final prev name) pkgs;
+
+  getPkgDefs = pkgs: config.packages (moduleArgs // { inherit (pkgs) system; });
 in
 {
   options = {
@@ -36,8 +38,8 @@ in
     };
 
     packages = mkOption {
-      type = optCallWith moduleArgs (lazyAttrsOf packageDef);
-      default = { };
+      type = nullable (optFunctionTo (lazyAttrsOf packageDef));
+      default = null;
     };
 
     pname = mkOption {
@@ -57,9 +59,10 @@ in
       packages.default = config.package;
     })
 
-    (mkIf (config.packages != { }) {
+    (mkIf (config.packages != null) {
       packageOverlay = final: prev:
         let
+          pkgDefs = getPkgDefs prev;
           getName = pkg: pkg.pname or (parseDrvName pkg.name).name;
           mockPkgs = import ../misc/nameMockedPkgs.nix prev;
 
@@ -68,20 +71,19 @@ in
               "please set the `pname` flakelight option to the intended name."))
             [
               (assert config.pname != null; config.pname)
-              (getName (mockPkgs.callPackage config.packages.default { }))
+              (getName (mockPkgs.callPackage pkgDefs.default { }))
               (getName (import inputs.nixpkgs {
                 inherit (prev.stdenv.hostPlatform) system;
                 inherit (config.nixpkgs) config;
                 overlays = config.withOverlays ++
-                  [ (final: prev: genPkgs final prev config.packages) ];
+                  [ (final: prev: genPkgs final prev pkgDefs) ];
               }).default)
             ];
         in
-        (optionalAttrs (config.packages ? default) rec {
-          default = genPkg final prev defaultPkgName
-            config.packages.default;
+        (optionalAttrs (pkgDefs ? default) rec {
+          default = genPkg final prev defaultPkgName pkgDefs.default;
           ${defaultPkgName} = default;
-        }) // genPkgs final prev (removeAttrs config.packages [ "default" ]);
+        }) // genPkgs final prev (removeAttrs pkgDefs [ "default" ]);
 
       overlay = final: prev: removeAttrs
         (config.packageOverlay (final.appendOverlays config.withOverlays) prev)
@@ -89,16 +91,15 @@ in
 
       outputs = rec {
         packages = genSystems (pkgs:
-          mapAttrs (k: _: pkgs.${k}) config.packages);
+          mapAttrs (k: _: pkgs.${k}) (getPkgDefs pkgs));
 
         checks = mapAttrs
           (_: mapAttrs' (n: nameValuePair ("packages-" + n)))
           packages;
       };
-    })
 
-    (mkIf (config.packages ? default) {
-      devShell.inputsFrom = pkgs: [ pkgs.default ];
+      devShell.inputsFrom = pkgs:
+        optionals ((getPkgDefs pkgs) ? default) [ pkgs.default ];
     })
   ];
 }

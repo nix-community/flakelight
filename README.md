@@ -73,7 +73,7 @@ To use a different nixpkgs, you can instead use:
     nixpkgs.url = "nixpkgs/nixpkgs-unstable";
     flakelight.url = "github:nix-community/flakelight";
   };
-  outputs = { flakelight, ... }:
+  outputs = { flakelight, ... }@inputs:
     flakelight ./. {
       inherit inputs;
       devShell.packages = pkgs: [ pkgs.hello pkgs.coreutils ];
@@ -182,7 +182,7 @@ like the following. Most attributes can be autoloaded.
 {
   description = "My C application.";
   inputs.flakelight.url = "github:nix-community/flakelight";
-  outputs = { flakelight, ... }@inputs:
+  outputs = { flakelight, ... }:
     flakelight ./. {
       license = "AGPL-3.0-or-later";
 

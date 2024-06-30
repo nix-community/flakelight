@@ -92,15 +92,15 @@ modules. These inputs get passed as the `inputs` module argument, and are used
 for `inputs` and `inputs'` in the package set.
 
 Default values are automatically initialized from your flake inputs by reading
-your `flake.lock`. Note that this does not include the `self` argument, which
-must be passed explicitly if you want to use it. The default values also are not
-affected by nix command flags like `--override-input`, so inputs should be
-passed to enable full CLI functionality.
+your `flake.lock`. Note that this does not include the `self` argument; for
+using `self`, use `inherit inputs` or otherwise define inputs. The default
+values also are not affected by nix command flags like `--override-input`, so
+inputs should be passed to enable full CLI functionality.
 
 Flakelight will add a recent `nixpkgs` input if your flake does not have one.
 Other flakelight modules may provide default inputs for their dependencies.
 
-To use a different nixpkgs from the built-in default:
+To use a different nixpkgs from the built-in default (passing all inputs):
 
 ```nix
 {
@@ -108,7 +108,7 @@ To use a different nixpkgs from the built-in default:
     flakelight.url = "github:nix-community/flakelight";
     nixpkgs.url = "nixpkgs/nixpkgs-unstable";
   };
-  outputs = { flakelight, ... }:
+  outputs = { flakelight, ... }@inputs:
     flakelight ./. {
       inherit inputs;
     };

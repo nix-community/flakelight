@@ -69,15 +69,31 @@ in
     }))
     (f: f.test);
 
-  outputs-moduleArgs = test
+  moduleArgs = test
     (flakelight ./empty ({ moduleArgs, ... }: {
       outputs = { inherit moduleArgs; };
     }))
-    (f: f.moduleArgs ? lib
+    (f: f.moduleArgs ? config
+      && f.moduleArgs ? options
       && f.moduleArgs ? src
+      && f.moduleArgs ? lib
+      && f.moduleArgs ? flakelight
       && f.moduleArgs ? inputs
       && f.moduleArgs ? outputs
-      && f.moduleArgs ? flakelight);
+      && f.moduleArgs ? pkgsFor
+      && f.moduleArgs ? specialArgs
+      && f.moduleArgs ? modulesPath
+      && f.moduleArgs ? moduleArgs
+    );
+
+  moduleArgs-add = test
+    (flakelight ./empty {
+      _module.args.test-val = true;
+      outputs = { test-val, ... }: {
+        test = test-val;
+      };
+    })
+    (f: f.test);
 
   extra-pkgs-vals = test
     (flakelight ./empty {

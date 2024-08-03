@@ -2,19 +2,7 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config
-, options
-, src
-, lib
-, flakelight
-, inputs
-, outputs
-, pkgsFor
-, genSystems
-, specialArgs
-, modulesPath
-, moduleArgs
-}@args:
+{ config, ... }@args:
 {
-  _module.args.moduleArgs = args;
+  _module.args.moduleArgs = args // config._module.args;
 }

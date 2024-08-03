@@ -58,7 +58,7 @@ The following module arguments are available:
 - `inputs`: value of inputs option
 - `outputs`: resulting output (i.e. final flake attributes)
 - `pkgsFor`: attrset mapping systems to the pkgs set for that system
-- `moduleArgs`: All of the above arguments (passed to auto-loaded files)
+- `moduleArgs`: All of the available arguments (passed to auto-loaded files)
 
 ## Additional pkgs values
 

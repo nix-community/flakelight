@@ -214,3 +214,216 @@ stdenv.mkDerivation {
 
 A leading underscore in filename is stripped (default needs to be escaped to not
 conflict with dir import).
+
+## Differences from flake-parts
+
+*Note: Text below taken from [discourse post](https://discourse.nixos.org/t/flakelight-a-new-modular-flake-framework/32395/3)*
+
+Here are some of the differences:
+
+### Per-system attributes
+
+Flake-parts has perSystem modules which contain per-system options, while Flakelight has regular options which can be functions that are passed the set of packages.
+
+For example:
+
+Flake-parts:
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "nixpkgs/nixpkgs-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+  };
+  outputs = inputs@{ flake-parts, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64-linux" "aarch64-linux" ];
+      perSystem = { pkgs, ... }: {
+        apps.default.program = "${pkgs.hello}/bin/hello";
+      };
+    };
+}
+```
+
+Flakelight:
+
+```nix
+{
+  inputs.flakelight.url = "github:accelbread/flakelight";
+  outputs = { flakelight, ... }:
+    flakelight ./. {
+      app = pkgs: "${pkgs.hello}/bin/hello";
+    };
+}
+```
+
+### Shortcuts for default
+
+There are options to set default outputs; in the above example, app sets `apps.default`. This lowers boilerplate for flakes that just set default outputs. You can still set other app outputs or directly use apps.default.
+
+### Overlays actually use your deps
+
+If a dependency flake using Flake-parts has a package A that depends on package B in its overlay, and a user applies that overlay to their nixpkgs, A will use B from the dependency flake’s nixpkgs. 
+If that flake were using Flakelight, A would use B from the user’s nixpkgs, like how overlays usually work.
+
+If a user actually wanted to use the flake’s packages with it’s dependencies, they can already do that with `_: prev: flake.packages.${prev.system}`.
+
+### Autoload files from ./nix
+
+Flakelight options can be automatically read from files in ./nix. 
+For example you could have files for ./nix/packages/a.nix and ./nix/packages/b.nix to define packages a and b, or just have a ./nix/packages.nix that defines both.
+
+The directory to load from can also be changed.
+
+### Using overlays from other flakes
+
+Flake-parts:
+```nix
+{
+  inputs = {
+    nixpkgs.url = "nixpkgs/nixpkgs-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+  };
+  outputs = inputs@{ flake-parts, emacs-overlay, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64-linux" "aarch64-linux" ];
+      perSystem = { pkgs, system, ... }: {
+        _module.args.pkgs = import nixpkgs { 
+            inherit system;
+            overlays = [ emacs-overlay.overlays.default ]; };
+        };
+    };
+}
+```
+
+Flakelight:
+```nix
+{
+  inputs.flakelight.url = "github:accelbread/flakelight";
+  outputs = { flakelight, emacs-overlay, ... }:
+    flakelight ./. {
+      withOverlays = [ emacs-overlay.overlays.default ];
+    };
+}
+```
+
+### Inputs
+
+In Flake-parts, inputs is a separate parameter. In Flakelight, it is a normal option. 
+Also, defaults for all used dependencies are provided, so you can leave it unset.
+
+### Src
+
+Flakelight takes an src argument that your modules can use to automatically set up packages and attributes. 
+For example, Flakelight-rust derives flake outputs from src + /Cargo.toml. As another example, if your repo has a .editorconfig file, an editorconfig check will be added.
+
+### Packages are defined like in nixpkgs
+
+```nix
+{
+  inputs.flakelight.url = "github:accelbread/flakelight";
+  outputs = { flakelight, ... }:
+    flakelight ./. {
+      package = { stdenv, cmake, ninja }:
+        stdenv.mkDerivation {
+          pname = "pkg1";
+          version = "0.0.1";
+          src = ./.;
+          nativeBuildInputs = [ cmake ninja ];
+        };
+    };
+}
+```
+
+Alternatively using autoloaded files:
+
+*flake.nix:*
+```nix
+{
+  inputs.flakelight.url = "github:accelbread/flakelight";
+  outputs = { flakelight, ... }: flakelight ./. { };
+}
+```
+
+*nix/package.nix:*
+
+```nix
+{ stdenv, cmake, ninja, src }:
+stdenv.mkDerivation {
+  pname = "pkg1";
+  version = "0.0.1";
+  inherit src;
+  nativeBuildInputs = [ cmake ninja ];
+};
+```
+
+With Flake-parts, this would be:
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "nixpkgs/nixpkgs-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+  };
+  outputs = inputs@{ flake-parts, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64-linux" "aarch64-linux" ];
+      perSystem = { pkgs, ... }: {
+        packages.default =
+          let
+            inherit (pkgs) stdenv cmake ninja;
+          in
+          stdenv.mkDerivation {
+            pname = "pkg1";
+            version = "0.0.1";
+            src = ./.;
+            nativeBuildInputs = [ cmake ninja ];
+          };
+    };
+  };
+}
+```
+
+Flakelight’s src parameter also lets other files and modules easily access the flake’s root dir, which an external module could not in Flake-parts.
+With Flakelight, since packages are functions, it can also automatically generate a correct overlay.
+
+### No empty outputs
+
+Flake-parts creates empty outputs; for example if you don’t have any packages, it will create a packages output that is an empty set. Flakelight does not do this.
+
+### Multi-language formatter
+
+Flakelight has options to define formatters for different file types, that can be set by different modules. 
+All configured formatters will be combined to provide a `formatter.${system}` that formats each configured file type with its corresponding formatter.
+
+### Designed to enable modules to do most of the work
+
+For example, here is a flake for a Rust package:
+```nix
+{
+  inputs = {
+    flakelight.url = "github:accelbread/flakelight";
+    flakelight-rust.url = "github:accelbread/flakelight-rust";
+  };
+  outputs = { flakelight, flakelight-rust, ... }: flakelight ./. {
+    imports = [ flakelight-rust.flakelightModules.default ];
+  };
+}
+```
+
+It exports the following:
+- Per-system attributes for default systems (`x86_64-linux` and `aarch64-linux`)
+- `packages.${system}.default` attributes for each system
+- `overlays.default` providing an overlay with the package (built with the applied pkg set’s dependencies)
+- `devShells.${system}.default` that provides `rust-analyzer`, `cargo`, `clippy`, `rustc`, and `rustfmt` as well as sets `RUST_SRC_PATH`
+- `checks.${system}.${check}` attributes for build, test, clippy, and formatting checks
+- `formatter.${system}` will also format Rust files with `rustfmt`.
+
+The above flake can also be written equivalently as:
+
+```nix
+{
+  inputs.flakelight-rust.url = "github:accelbread/flakelight-rust";
+  outputs = { flakelight-rust, ... }: flakelight-rust ./. { };
+}
+```

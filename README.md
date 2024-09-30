@@ -215,5 +215,5 @@ stdenv.mkDerivation {
 A leading underscore in filename is stripped (default needs to be escaped to not
 conflict with dir import).
 
-## Similar libraries
+## Related Docs
 - [Comparison to flake-parts](https://discourse.nixos.org/t/flakelight-a-new-modular-flake-framework/32395/3)

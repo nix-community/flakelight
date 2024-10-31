@@ -508,6 +508,9 @@ list.
 initialization. It can optionally be a function taking the package set and
 returning such a string.
 
+`devShell.hardeningDisable` is a list of hardening options to disable. Setting
+it to `["all"]` disables all Nix hardening.
+
 `devShell.env` is for setting environment variables in the shell. It is an
 attribute set mapping variables to values. It can optionally be a function
 taking the package set and returning such an attribute set.

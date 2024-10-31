@@ -343,6 +343,7 @@ in
         '';
         env.TEST_VAR = "test value";
         stdenv = pkgs: pkgs.clangStdenv;
+        hardeningDisable = [ "all" ];
       };
     })
     (f: lib.isDerivation f.devShells.x86_64-linux.default);

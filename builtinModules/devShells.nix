@@ -25,6 +25,11 @@ let
       default = "";
     };
 
+    hardeningDisable = mkOption {
+      type = listOf str;
+      default = [ ];
+    };
+
     env = mkOption {
       type = optFunctionTo (lazyAttrsOf str);
       default = { };
@@ -59,7 +64,10 @@ let
     else
       let cfg' = mapAttrs (_: v: v pkgs) cfg; in
       pkgs.mkShell.override { inherit (cfg') stdenv; }
-        (cfg'.env // { inherit (cfg') inputsFrom packages shellHook; });
+        (cfg'.env // {
+          inherit (cfg') inputsFrom packages shellHook;
+          inherit (cfg) hardeningDisable;
+        });
 in
 {
   options = {

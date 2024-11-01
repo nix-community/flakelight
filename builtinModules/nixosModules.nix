@@ -17,6 +17,14 @@ in
 
     nixosModules = mkOption {
       type = optCallWith moduleArgs (lazyAttrsOf module);
+      apply = modules: builtins.mapAttrs
+        (_: module: {
+          imports = [
+            { _module.args = builtins.mapAttrs (_: v: lib.mkDefault v) config._module.args; }
+            module
+          ];
+        })
+        modules;
       default = { };
     };
   };

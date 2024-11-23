@@ -57,7 +57,7 @@ in
     (mkIf ((config.formatters != null) || (config.formatter != null)) {
       checks.formatting = { lib, outputs', diffutils, ... }: ''
         ${lib.getExe outputs'.formatter} .
-        ${diffutils}/bin/diff -qr ${src} . |\
+        ${diffutils}/bin/diff --exclude=node_modules -qr ${src} . |\
           sed 's/Files .* and \(.*\) differ/File \1 not formatted/g'
       '';
     })

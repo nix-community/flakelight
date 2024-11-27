@@ -20,7 +20,8 @@ in
     formatters = pkgs:
       let
         nixpkgs-fmt = "${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt";
-        prettier = "${pkgs.nodePackages.prettier}/bin/prettier --write";
+        prettier = "${pkgs.nodePackages.prettier}/bin/prettier --write"
+          + " --cache-location=.prettiercache";
       in
       {
         "*.nix" = mkDefault nixpkgs-fmt;

@@ -42,6 +42,7 @@ in
           in
           pkgs.writeShellScriptBin "formatter" ''
             PATH=${if fullContext then "" else makeBinPath packages}
+            if [ $# -eq 0 ]; then exec "$0" .; fi
             for f in "$@"; do
               if [ -d "$f" ]; then
                 ${fd}/bin/fd "$f" -Htf -x "$0" &

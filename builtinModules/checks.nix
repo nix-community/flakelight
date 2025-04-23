@@ -10,12 +10,14 @@ let
   inherit (flakelight.types) coercedTo' drv nullable optFunctionTo stringLike;
 
   mkCheck = name: pkgs: cmd:
-    pkgs.runCommand "check-${name}" { } ''
-      cp --no-preserve=mode -r ${src} src
-      cd src
-      ${cmd}
-      touch $out
-    '';
+    pkgs.runCommand "check-${name}"
+      { allowSubstitutes = false; }
+      ''
+        cp --no-preserve=mode -r ${src} src
+        cd src
+        ${cmd}
+        touch $out
+      '';
 
   checkType = mkOptionType {
     name = "checkType";

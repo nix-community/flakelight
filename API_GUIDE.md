@@ -6,8 +6,8 @@ This section covers important functions available in Flakelight's lib attribute.
 
 ### mkFlake
 
-The outputs of a flake using Flakelight are created using the `mkFlake` function.
-When called directly, Flakelight invokes `mkFlake`, as follows:
+The outputs of a flake using Flakelight are created using the `mkFlake`
+function. When called directly, Flakelight invokes `mkFlake`, as follows:
 
 ```nix
 {
@@ -203,8 +203,8 @@ To enable using a directory for an attrset that includes a `default` attribute,
 attr names can be escaped with an underscore. For example,
 `${nixDir}/nix/packages/_default.nix` will be loaded as `packages.default`.
 
-Aliases for options can be set with the `nixDirAliases` option. For example,
-by default `nixDirAliases.nixosConfigurations = [ "nixos" ];` is set which means
+Aliases for options can be set with the `nixDirAliases` option. For example, by
+default `nixDirAliases.nixosConfigurations = [ "nixos" ];` is set which means
 "nixos" can be used instead of "nixosConfigurations" for loading the files as
 described above.
 
@@ -360,8 +360,8 @@ Types:
 ```
 
 The `package` and `packages` options allow you to add packages. These are
-exported in the `packages.${system}` outputs, are included in `overlays.default`,
-and have build checks in `checks.${system}`.
+exported in the `packages.${system}` outputs, are included in
+`overlays.default`, and have build checks in `checks.${system}`.
 
 `package` can be set to a package definition, and will set `packages.default`.
 
@@ -369,10 +369,10 @@ and have build checks in `checks.${system}`.
 will additionally get a `system` arg in addition to module args, to allow
 conditionally including package definitions depending on the system.
 
-By default, the `packages.default` package's name (its attribute name in
-the package set and overlay) is automatically determined from the derivation's
-`pname`. In order to use a different attribute name from the package pname,
-to set it in cases where it cannot be automatically determined, or to speed up
+By default, the `packages.default` package's name (its attribute name in the
+package set and overlay) is automatically determined from the derivation's
+`pname`. In order to use a different attribute name from the package pname, to
+set it in cases where it cannot be automatically determined, or to speed up
 uncached evaluation, the flakelight `pname` option can be set.
 
 To set the default package, you can set the options as follows:
@@ -768,8 +768,7 @@ Types:
              (ModuleArgs -> (AttrsOf (Template | (ModuleArgs -> Template))))
 ```
 
-The `template` and `templates` options allow you to set `templates`
-outputs.
+The `template` and `templates` options allow you to set `templates` outputs.
 
 `templates` is an attribute set to template values.
 
@@ -1172,8 +1171,8 @@ Types:
 
 This option has options for configuring Flakelight's defaults.
 
-`flakelight.editorconfig` can be set to false to disable the editorconfig
-check that is added if editorconfig configuration is detected.
+`flakelight.editorconfig` can be set to false to disable the editorconfig check
+that is added if editorconfig configuration is detected.
 
 `flakelight.builtinFormatters` can be set to false to disable the default
 formatting configuration.

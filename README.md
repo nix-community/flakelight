@@ -15,7 +15,8 @@ A modular Nix flake framework for simplifying flake definitions.
 - Handles generating per-system attributes
 - Extensible using the module system
 - Given package definitions, generates package and overlay outputs
-- Automatically import attributes from nix files in a directory (default `./nix`)
+- Automatically import attributes from nix files in a directory (default
+  `./nix`)
 - Builds formatter outputs that can format multiple file types
 - Provides outputs/perSystem options for easy migration
 
@@ -84,8 +85,8 @@ To use a different nixpkgs, you can instead use:
 ### Rust package
 
 The following is an example flake for a Rust project using `flakelight-rust`,
-invoked by using `flakelight-rust`'s wrapper.
-Package metadata is taken from the project's `Cargo.toml`.
+invoked by using `flakelight-rust`'s wrapper. Package metadata is taken from the
+project's `Cargo.toml`.
 
 ```nix
 {
@@ -100,8 +101,8 @@ The above flake exports the following:
 - `packages.${system}.default` attributes for each system
 - `overlays.default` providing an overlay with the package (built with the
   applied pkg set's dependencies)
-- `devShells.${system}.default` that provides `rust-analyzer`, `cargo`, `clippy`,
-  `rustc`, and `rustfmt` as well as sets `RUST_SRC_PATH`
+- `devShells.${system}.default` that provides `rust-analyzer`, `cargo`,
+  `clippy`, `rustc`, and `rustfmt` as well as sets `RUST_SRC_PATH`
 - `checks.${system}.${check}` attributes for build, test, clippy, and formatting
   checks
 - `formatter.${system}` with additional support for formatting Rust files
@@ -123,7 +124,8 @@ Equivalently, you can just import the `flakelight-rust` module as follows:
 See [flakelight-rust.nix][flakelight-rust] to see how you could configure it
 without the module.
 
-[flakelight-rust]: https://github.com/accelbread/flakelight-rust/blob/master/flakelight-rust.nix
+[flakelight-rust]:
+  https://github.com/accelbread/flakelight-rust/blob/master/flakelight-rust.nix
 
 ### C application
 

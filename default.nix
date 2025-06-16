@@ -28,12 +28,13 @@ let
       ];
     }).config.outputs;
 
-    # Attributes to allow module flakes to extend mkFlake
-    extraModules = [ ];
+    # mkFlake.extend takes a list of flakelight modules, and returns an mkFlake
+    # that automatically includes those modules.
     extend = (fix (extend': mkFlake': modules: fix (self: mkFlake' // {
       extraModules = mkFlake'.extraModules ++ modules;
       extend = extend' self;
     }))) mkFlake;
+    extraModules = [ ];
   };
 
   flakelight = {

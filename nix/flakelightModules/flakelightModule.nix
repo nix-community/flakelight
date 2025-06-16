@@ -6,6 +6,9 @@
 
 { flakelight, outputs, src, ... }: {
   nixDir = src;
+  # Export a mkFlake function equivalent to flakelight's but with the flake's
+  # default flakelightModule built in.
   lib.mkFlake = flakelight.mkFlake.extend [ outputs.flakelightModules.default ];
+  # Make the flake callable, which executes its mkFlake.
   functor = self: self.lib.mkFlake;
 }

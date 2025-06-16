@@ -4,8 +4,7 @@
 
 # A Flakelight module for Flakelight module flakes
 
-{ flakelight, outputs, src, ... }: {
-  nixDir = src;
+{ flakelight, outputs, ... }: {
   # Export a mkFlake function equivalent to flakelight's but with the flake's
   # default flakelightModule built in.
   lib.mkFlake = flakelight.mkFlake.extend [ outputs.flakelightModules.default ];

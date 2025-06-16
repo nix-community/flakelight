@@ -7,9 +7,9 @@ let
   inherit (inputs) nixpkgs;
   inherit (builtins) isAttrs isPath readDir;
   inherit (nixpkgs.lib) all attrNames composeManyExtensions evalModules filter
-    findFirst fix genAttrs getValues hasSuffix isDerivation isFunction isList
-    isStringLike mapAttrs mapAttrsToList mkDefault mkOptionType pathExists pipe
-    removePrefix removeSuffix singleton warn;
+    fix genAttrs getValues hasSuffix isDerivation isFunction isStringLike
+    mapAttrs mapAttrsToList mkDefault mkOptionType pathExists pipe removePrefix
+    removeSuffix singleton;
   inherit (nixpkgs.lib.types) coercedTo defaultFunctor functionTo listOf
     optionDescriptionPhrase;
   inherit (nixpkgs.lib.options) mergeEqualOption mergeOneOption;
@@ -38,7 +38,7 @@ let
   };
 
   flakelight = {
-    inherit autoImport autoImportArgs importDir mkFlake selectAttr types;
+    inherit importDir mkFlake selectAttr types;
   };
 
   types = rec {
@@ -167,28 +167,6 @@ let
       (if pathExists (path + "/_${p}.nix") then "/_${p}.nix"
       else if pathExists (path + "/${p}.nix") then "/${p}.nix"
       else "/${p}")));
-
-  autoImport = dir: name: warn
-    ("The autoImport function is deprecated. " +
-      "All options are now automatically auto-loaded.")
-    (if isList name
-    then findFirst (x: x != null) null (map (autoImport dir) name)
-    else
-      if pathExists (dir + "/${name}.nix")
-      then import (dir + "/${name}.nix")
-      else if pathExists (dir + "/${name}/default.nix")
-      then import (dir + "/${name}")
-      else if pathExists (dir + "/${name}")
-      then importDir (dir + "/${name}")
-      else null);
-
-  autoImportArgs = dir: args: name: warn
-    ("The autoImportArgs function is deprecated. " +
-      "Wrap the target type in flakelight.types.optCallWith instead.")
-    (
-      let v = autoImport dir name; in
-      if isFunction v then v args else v
-    );
 
   selectAttr = attr: mapAttrs (_: v: v.${attr} or { });
 in

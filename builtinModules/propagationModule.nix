@@ -33,7 +33,7 @@ in
         # Propagate module to home-manager when using its nixos module
         home-manager.sharedModules =
           optional (! config.home-manager.useGlobalPkgs)
-            [ flakeConfig.propagationModule ];
+            flakeConfig.propagationModule;
       })
       // {
         # Give access to flakelight module args under `flake` arg.

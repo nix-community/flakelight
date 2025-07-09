@@ -32,11 +32,13 @@ The following modules are also available:
 - [flakelight-zig][] for Zig projects
 - [flakelight-elisp][] for flakes providing Emacs lisp package(s)
 - [flakelight-darwin][] for nix-darwin configs
+- [flakelight-haskell][] for Haskell projects
 
 [flakelight-rust]: https://github.com/accelbread/flakelight-rust
 [flakelight-zig]: https://github.com/accelbread/flakelight-zig
 [flakelight-elisp]: https://github.com/accelbread/flakelight-elisp
 [flakelight-darwin]: https://github.com/cmacrae/flakelight-darwin
+[flakelight-haskell]: https://github.com/hezhenxing/flakelight-haskell
 
 ## Contact
 

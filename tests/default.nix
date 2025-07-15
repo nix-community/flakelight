@@ -535,6 +535,17 @@ in
       program = "${nixpkgs.legacyPackages.x86_64-linux.hello}/bin/hello";
     }));
 
+  app-no-type = test
+    (flakelight ./empty {
+      app = {
+        program = "${nixpkgs.legacyPackages.x86_64-linux.hello}/bin/hello";
+      };
+    })
+    (f: (f.apps.x86_64-linux.default == {
+      type = "app";
+      program = "${nixpkgs.legacyPackages.x86_64-linux.hello}/bin/hello";
+    }));
+
   apps = test
     (flakelight ./empty {
       inputs = { inherit nixpkgs; };

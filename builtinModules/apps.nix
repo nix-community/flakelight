@@ -8,7 +8,7 @@ let
   inherit (lib) defaultFunctor fix isFunction last mapAttrs mergeDefinitions
     mkIf mkMerge mkOption mkOptionType;
   inherit (lib.types) coercedTo enum lazyAttrsOf
-    optionDescriptionPhrase pathInStore submoduleWith;
+    optionDescriptionPhrase pathInStore str submoduleWith;
   inherit (flakelight.types) nullable optFunctionTo stringLike;
 
   isStorePath = s: match "${storeDir}/[^.][^ \n]*" s != null;
@@ -18,6 +18,7 @@ let
       options = {
         type = mkOption { type = enum [ "app" ]; default = "app"; };
         program = mkOption { type = pathInStore // { check = isStorePath; }; };
+        meta.description = mkOption { type = nullable str; default = null; };
       };
     }];
   };
@@ -58,6 +59,11 @@ let
     nestedTypes.coercedType = stringLike;
     nestedTypes.finalType = app;
   }));
+
+  cleanApp = app:
+    if app.meta.description == null then {
+      inherit (app) type program;
+    } else app;
 in
 {
   options = {
@@ -79,7 +85,7 @@ in
 
     (mkIf (config.apps != null) {
       outputs.apps = genSystems (pkgs:
-        mapAttrs (_: v: v pkgs) (config.apps pkgs));
+        mapAttrs (_: v: cleanApp (v pkgs)) (config.apps pkgs));
     })
   ];
 }

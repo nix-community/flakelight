@@ -4,25 +4,30 @@
 
 { config, options, src, lib, flakelight, ... }:
 let
-  inherit (builtins) attrNames;
+  inherit (builtins) attrNames elem;
   inherit (lib) findFirst genAttrs mkIf mkOption pathExists subtractLists;
   inherit (lib.types) attrsOf listOf str;
-  inherit (flakelight) importDir;
+  inherit (flakelight) importDir importDirPaths;
   inherit (flakelight.types) path;
 
   inherit (config) nixDir;
 
-  importName = name:
+  importName = asPaths: name:
     if pathExists (nixDir + "/${name}.nix")
     then { success = true; value = import (nixDir + "/${name}.nix"); }
     else if pathExists (nixDir + "/${name}/default.nix")
     then { success = true; value = import (nixDir + "/${name}"); }
     else if pathExists (nixDir + "/${name}")
-    then { success = true; value = importDir (nixDir + "/${name}"); }
+    then {
+      success = true;
+      value = (if asPaths then importDirPaths else importDir)
+        (nixDir + "/${name}");
+    }
     else { success = false; };
 
-  importNames = names:
-    findFirst (x: x.success) { success = false; } (map importName names);
+  importNames = asPaths: names:
+    findFirst (x: x.success) { success = false; }
+      (map (importName asPaths) names);
 in
 {
   options = {
@@ -35,6 +40,11 @@ in
       type = attrsOf (listOf str);
       default = { };
     };
+
+    nixDirPathAttrs = mkOption {
+      type = listOf str;
+      default = [ ];
+    };
   };
 
   config = genAttrs (subtractLists [ "_module" "nixDir" ] (attrNames options))
@@ -42,6 +52,8 @@ in
       let
         internal = options.${name}.internal or false;
         val = importNames
+          (!(elem name [ "nixDirPathAttrs" "nixDirAliases" ])
+            && (elem name config.nixDirPathAttrs))
           (if name == "nixDirAliases" then [ name ] else
           ([ name ] ++ config.nixDirAliases.${name} or [ ]));
         cond = !internal && val.success;

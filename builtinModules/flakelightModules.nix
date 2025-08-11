@@ -29,5 +29,7 @@ in
     (mkIf (config.flakelightModules != { }) {
       outputs = { inherit (config) flakelightModules; };
     })
+
+    { nixDirPathAttrs = [ "flakelightModules" ]; }
   ];
 }

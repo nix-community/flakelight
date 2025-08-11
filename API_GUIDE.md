@@ -213,6 +213,12 @@ All options except for `nixDir` and `_module` can be configured this way.
 To apply transformations on the output of an autoloaded directory, you can use
 `option/default.nix` and load the directory with `flakelight.importDir`.
 
+If you add a new config type that should be loaded as paths instead of imported,
+such as configs for Nix modules, add them to the `nixDirPathAttrs` option. This
+is already set for built-in module options. When options whose names are in
+`nixDirPathAttrs` are loaded as a directory, `flakelight.importDirPaths` is used
+instead of `flakelight.importDir`.
+
 ### outputs
 
 ```

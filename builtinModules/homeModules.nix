@@ -29,5 +29,7 @@ in
     (mkIf (config.homeModules != { }) {
       outputs = { inherit (config) homeModules; };
     })
+
+    { nixDirPathAttrs = [ "homeModules" ]; }
   ];
 }

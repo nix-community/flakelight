@@ -38,7 +38,7 @@ let
   };
 
   flakelight = {
-    inherit importDir mkFlake selectAttr types;
+    inherit importDir importDirPaths mkFlake selectAttr types;
   };
 
   types = rec {
@@ -154,7 +154,9 @@ let
     };
   };
 
-  importDir = path: genAttrs
+  importDir = path: mapAttrs (_: import) (importDirPaths path);
+
+  importDirPaths = path: genAttrs
     (pipe (readDir path) [
       attrNames
       (filter (s: s != "default.nix"))
@@ -163,10 +165,10 @@ let
       (map (removeSuffix ".nix"))
       (map (removePrefix "_"))
     ])
-    (p: import (path +
+    (p: path +
       (if pathExists (path + "/_${p}.nix") then "/_${p}.nix"
       else if pathExists (path + "/${p}.nix") then "/${p}.nix"
-      else "/${p}")));
+      else "/${p}"));
 
   selectAttr = attr: mapAttrs (_: v: v.${attr} or { });
 in

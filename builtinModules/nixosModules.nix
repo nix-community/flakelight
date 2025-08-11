@@ -29,5 +29,7 @@ in
     (mkIf (config.nixosModules != { }) {
       outputs = { inherit (config) nixosModules; };
     })
+
+    { nixDirPathAttrs = [ "nixosModules" ]; }
   ];
 }

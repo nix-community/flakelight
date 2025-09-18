@@ -4,11 +4,13 @@
 
 { config, inputs, lib, flakelight, moduleArgs, ... }:
 let
-  inherit (builtins) all head isAttrs length;
-  inherit (lib) foldAttrs genAttrs getFiles getValues mapAttrs mergeAttrs
-    mkOption mkOptionType showFiles showOption;
-  inherit (lib.types) functionTo lazyAttrsOf listOf nonEmptyStr raw uniq;
-  inherit (flakelight.types) optCallWith optListOf overlay;
+  inherit (builtins) all attrNames head isAttrs length;
+  inherit (lib) foldAttrs functionArgs genAttrs getFiles getValues isFunction
+    mapAttrs mergeAttrs mkOption mkOptionType showFiles showOption
+    subtractLists;
+  inherit (lib.types) coercedTo functionTo lazyAttrsOf listOf nonEmptyStr raw
+    uniq;
+  inherit (flakelight.types) function optCallWith overlay;
 
   outputs = mkOptionType {
     name = "outputs";
@@ -30,6 +32,18 @@ let
   });
 
   genSystems = f: genAttrs config.systems (system: f pkgsFor.${system});
+
+  funcToOverlayList = f:
+    let
+      fArgs = attrNames (functionArgs f);
+      mArgs = attrNames moduleArgs;
+      fApplied = f moduleArgs;
+      isOverlay = (subtractLists mArgs fArgs != [ ])
+        || isFunction fApplied;
+    in
+    if isOverlay then [ f ] else fApplied;
+
+  withOverlaysType = coercedTo function funcToOverlayList (listOf overlay);
 in
 {
   options = {
@@ -58,7 +72,7 @@ in
     };
 
     withOverlays = mkOption {
-      type = optListOf overlay;
+      type = withOverlaysType;
       default = [ ];
     };
   };

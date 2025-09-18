@@ -186,6 +186,14 @@ in
     })
     (f: import f.packages.x86_64-linux.default);
 
+  withOverlays-module-args = test
+    (flakelight ./empty {
+      withOverlays = { inputs, ... }:
+        [ (final: prev: { testValue = "true"; }) ];
+      package = { writeText, testValue }: writeText "test" "${testValue}";
+    })
+    (f: import f.packages.x86_64-linux.default);
+
   package-no-named-args = test
     (flakelight ./empty {
       package = pkgs: pkgs.hello;

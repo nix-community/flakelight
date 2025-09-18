@@ -314,7 +314,7 @@ option as follows:
 ### withOverlays
 
 ```
-Type: [Overlay] | Overlay
+Type: [Overlay] | Overlay | (ModuleArgs -> [Overlay])
 ```
 
 This allows you to apply overlays to the Nixpkgs instance used for building

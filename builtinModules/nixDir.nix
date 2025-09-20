@@ -5,7 +5,7 @@
 { config, options, src, lib, flakelight, ... }:
 let
   inherit (builtins) attrNames elem;
-  inherit (lib) findFirst genAttrs mkIf mkOption pathExists subtractLists;
+  inherit (lib) concatMap genAttrs mkMerge mkOption pathExists subtractLists;
   inherit (lib.types) attrsOf listOf str;
   inherit (flakelight) importDir importDirPaths;
   inherit (flakelight.types) path;
@@ -14,20 +14,15 @@ let
 
   importName = asPaths: name:
     if pathExists (nixDir + "/${name}.nix")
-    then { success = true; value = import (nixDir + "/${name}.nix"); }
+    then [ (import (nixDir + "/${name}.nix")) ]
     else if pathExists (nixDir + "/${name}/default.nix")
-    then { success = true; value = import (nixDir + "/${name}"); }
+    then [ (import (nixDir + "/${name}")) ]
     else if pathExists (nixDir + "/${name}")
-    then {
-      success = true;
-      value = (if asPaths then importDirPaths else importDir)
-        (nixDir + "/${name}");
-    }
-    else { success = false; };
-
-  importNames = asPaths: names:
-    findFirst (x: x.success) { success = false; }
-      (map (importName asPaths) names);
+    then [
+      ((if asPaths then importDirPaths else importDir)
+        (nixDir + "/${name}"))
+    ]
+    else [ ];
 in
 {
   options = {
@@ -51,12 +46,12 @@ in
     (name:
       let
         internal = options.${name}.internal or false;
-        val = importNames
-          (!(elem name [ "nixDirPathAttrs" "nixDirAliases" ])
-            && (elem name config.nixDirPathAttrs))
-          (if name == "nixDirAliases" then [ name ] else
-          ([ name ] ++ config.nixDirAliases.${name} or [ ]));
-        cond = !internal && val.success;
+        names =
+          if internal then [ ] else
+          if name == "nixDirAliases" then [ name ]
+          else ([ name ] ++ config.nixDirAliases.${name} or [ ]);
+        asPaths = !(elem name [ "nixDirPathAttrs" "nixDirAliases" ])
+          && (elem name config.nixDirPathAttrs);
       in
-      mkIf cond (if cond then val.value else { }));
+      mkMerge (concatMap (importName asPaths) names));
 }

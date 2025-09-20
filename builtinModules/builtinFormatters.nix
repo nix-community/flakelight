@@ -12,11 +12,6 @@ in
     { default = config.formatter == null; };
 
   config = mkIf config.flakelight.builtinFormatters {
-    devShell.packages = pkgs: [
-      pkgs.nixpkgs-fmt
-      pkgs.nodePackages.prettier
-    ];
-
     formatters = pkgs:
       let
         nixpkgs-fmt = "${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt";

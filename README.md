@@ -2,6 +2,9 @@
 
 A modular Nix flake framework for simplifying flake definitions.
 
+Flakelight supports all types of flakes; projects, shells, NixOS configurations,
+config monorepos, etc.
+
 ## Goals
 
 - Minimize boilerplate needed for flakes
@@ -26,7 +29,11 @@ See the [API docs](./API_GUIDE.md) for available options and example usage.
 
 ## Additional modules
 
-The following modules are also available:
+Modules can be used to share common configuration and simplify flakes further.
+For example, a programming language module can atomatically use that language's
+metadata and common tooling to set flakelight options.
+
+The following third-party modules are also available:
 
 - [flakelight-rust][] for Rust projects
 - [flakelight-zig][] for Zig projects
@@ -200,7 +207,7 @@ like the following. Most attributes can be autoloaded.
 }
 ```
 
-`./nix/packages/_default.nix`:
+`./nix/package.nix`:
 
 ```nix
 { stdenv, defaultMeta }:
@@ -215,9 +222,6 @@ stdenv.mkDerivation {
   meta = defaultMeta;
 }
 ```
-
-A leading underscore in filename is stripped (default needs to be escaped to not
-conflict with dir import).
 
 ## Related Resources
 

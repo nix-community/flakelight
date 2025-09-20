@@ -5,23 +5,29 @@
 { config, options, src, lib, flakelight, ... }:
 let
   inherit (builtins) attrNames elem;
-  inherit (lib) concatMap genAttrs mkMerge mkOption pathExists subtractLists;
+  inherit (lib) attrValues concatMap genAttrs mkMerge mkOption pathExists
+    subtractLists;
   inherit (lib.types) attrsOf listOf str;
   inherit (flakelight) importDir importDirPaths;
   inherit (flakelight.types) path;
 
   inherit (config) nixDir;
 
-  importName = asPaths: name:
+  importName = asPaths: type: name:
     if pathExists (nixDir + "/${name}.nix")
     then [ (import (nixDir + "/${name}.nix")) ]
     else if pathExists (nixDir + "/${name}/default.nix")
     then [ (import (nixDir + "/${name}")) ]
     else if pathExists (nixDir + "/${name}")
-    then [
-      ((if asPaths then importDirPaths else importDir)
-        (nixDir + "/${name}"))
-    ]
+    then
+      let
+        asAttrs = (if asPaths then importDirPaths else importDir)
+          (nixDir + "/${name}");
+        asList = attrValues asAttrs;
+      in
+      if type.check asAttrs then [ asAttrs ]
+      else if type.check asList then [ asList ]
+      else [ asAttrs ]
     else [ ];
 in
 {
@@ -45,7 +51,8 @@ in
   config = genAttrs (subtractLists [ "_module" "nixDir" ] (attrNames options))
     (name:
       let
-        internal = options.${name}.internal or false;
+        opt = options.${name};
+        internal = opt.internal or false;
         names =
           if internal then [ ] else
           if name == "nixDirAliases" then [ name ]
@@ -53,5 +60,5 @@ in
         asPaths = !(elem name [ "nixDirPathAttrs" "nixDirAliases" ])
           && (elem name config.nixDirPathAttrs);
       in
-      mkMerge (concatMap (importName asPaths) names));
+      mkMerge (concatMap (importName asPaths opt.type) names));
 }

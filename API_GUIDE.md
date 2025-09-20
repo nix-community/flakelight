@@ -191,13 +191,17 @@ automatically load nix files to configure flake options from.
 
 For a given option, the following is checked in order:
 
-- If `${nixDir}/option.nix` exists, it is imported as the value
-- Else if `${nixDir}/option` is a directory with a `default.nix`, it is imported
-- Else if `${nixDir}/option` is a directory, it results in an attrset with an
-  attr for each importable item in the directory for which the values are the
-  corresponding items imported. An importable item is a file ending with `.nix`
-  or a directory containing a `default.nix`. This is the same as the flakelight
-  `importDir` function.
+- If `${nixDir}/option.nix` exists, the value is the file imported.
+- Else if `${nixDir}/option` is a directory with a `default.nix`, the value is
+  the directory imported.
+- Else if `${nixDir}/option` is a directory, and option accepts an attrset, the
+  value in an attrset with an attr for each importable item in the directory,
+  for which the values are the corresponding items imported. An importable item
+  is a file ending with `.nix` or a directory containing a `default.nix`. This
+  is the same as the flakelight `importDir` function.
+- Else if `${nixDir}/option` is a directory, and option accepts an list, it
+  results in a list, the elements of which are the values of the attrset from
+  the prior branch.
 
 To enable using a directory for an attrset that includes a `default` attribute,
 attr names can be escaped with an underscore. For example,

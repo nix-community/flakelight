@@ -119,17 +119,17 @@ let
             (map (def: def // { value = coerceVal def.value; }) defs);
       };
 
-    optFunctionTo =
+    optFunctionTo = elemType:
       let
         nonFunction = mkOptionType {
           name = "nonFunction";
           description = "non-function";
           descriptionClass = "noun";
-          check = x: ! isFunction x;
+          check = x: ! isFunction x && elemType.check x;
           merge = mergeOneOption;
         };
       in
-      elemType: coercedTo nonFunction (x: _: x)
+      coercedTo nonFunction (x: _: x)
         (functionTo elemType);
 
     optCallWith = args: elemType: coercedTo function (x: x args) elemType;

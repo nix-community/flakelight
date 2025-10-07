@@ -183,7 +183,7 @@ To support all Linux systems supported by flakes, set `systems` as follows:
 ### nixDir
 
 ```
-Type: Path
+Type: Path | null
 ```
 
 The `nixDir` option is `./nix` by default and sets which directory to use to
@@ -222,6 +222,8 @@ such as configs for Nix modules, add them to the `nixDirPathAttrs` option. This
 is already set for built-in module options. When options whose names are in
 `nixDirPathAttrs` are loaded as a directory, `flakelight.importDirPaths` is used
 instead of `flakelight.importDir`.
+
+You may set `nixDir` to null to not load from any directory.
 
 ### outputs
 

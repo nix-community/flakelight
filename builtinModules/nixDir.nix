@@ -9,7 +9,7 @@ let
     subtractLists;
   inherit (lib.types) attrsOf listOf str;
   inherit (flakelight) importDir importDirPaths;
-  inherit (flakelight.types) path;
+  inherit (flakelight.types) nullable path;
 
   inherit (config) nixDir;
 
@@ -33,7 +33,7 @@ in
 {
   options = {
     nixDir = mkOption {
-      type = path;
+      type = nullable path;
       default = src + /nix;
     };
 
@@ -49,16 +49,16 @@ in
   };
 
   config = genAttrs (subtractLists [ "_module" "nixDir" ] (attrNames options))
-    (name:
-      let
-        opt = options.${name};
-        internal = opt.internal or false;
-        names =
-          if internal then [ ] else
-          if name == "nixDirAliases" then [ name ]
-          else ([ name ] ++ config.nixDirAliases.${name} or [ ]);
-        asPaths = !(elem name [ "nixDirPathAttrs" "nixDirAliases" ])
-          && (elem name config.nixDirPathAttrs);
-      in
-      mkMerge (concatMap (importName asPaths opt.type) names));
+    (name: mkMerge (if nixDir == null then [ ] else
+    let
+      opt = options.${name};
+      internal = opt.internal or false;
+      names =
+        if internal then [ ] else
+        if name == "nixDirAliases" then [ name ]
+        else ([ name ] ++ config.nixDirAliases.${name} or [ ]);
+      asPaths = !(elem name [ "nixDirPathAttrs" "nixDirAliases" ])
+        && (elem name config.nixDirPathAttrs);
+    in
+    concatMap (importName asPaths opt.type) names));
 }

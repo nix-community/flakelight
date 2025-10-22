@@ -5,7 +5,7 @@
 { config, lib, inputs, flakelight, moduleArgs, ... }:
 let
   inherit (builtins) mapAttrs;
-  inherit (lib) foldl mapAttrsToList mkIf mkOption recursiveUpdate;
+  inherit (lib) mapAttrsToList mkIf mkMerge mkOption;
   inherit (lib.types) attrs lazyAttrsOf;
   inherit (flakelight) selectAttr;
   inherit (flakelight.types) optCallWith;
@@ -32,19 +32,20 @@ in
     default = { };
   };
 
-  config = {
-    outputs = mkIf (config.nixosConfigurations != { }) {
-      nixosConfigurations = configs;
-      checks = foldl recursiveUpdate { } (mapAttrsToList
-        (n: v: {
+  config = mkMerge [
+    (mkIf (config.nixosConfigurations != { }) {
+      outputs.nixosConfigurations = configs;
+
+      checks = pkgs: mkMerge (mapAttrsToList
+        (n: v: mkIf (pkgs.system == v.config.nixpkgs.system) {
           # Wrapping the drv is needed as computing its name is expensive
           # If not wrapped, it slows down `nix flake show` significantly
-          ${v.config.nixpkgs.system}."nixos-${n}" = v.pkgs.runCommand
-            "check-nixos-${n}"
-            { } "echo ${v.config.system.build.toplevel} > $out";
+          "nixos-${n}" = pkgs.runCommand "check-nixos-${n}" { }
+            "echo ${v.config.system.build.toplevel} > $out";
         })
         configs);
-    };
-    nixDirAliases.nixosConfigurations = [ "nixos" ];
-  };
+    })
+
+    { nixDirAliases.nixosConfigurations = [ "nixos" ]; }
+  ];
 }

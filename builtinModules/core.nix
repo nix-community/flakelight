@@ -26,8 +26,8 @@ let
   };
 
   pkgsFor = genAttrs config.systems (system: import inputs.nixpkgs {
-    inherit system;
     inherit (config.nixpkgs) config;
+    localSystem = { inherit system; };
     overlays = config.withOverlays ++ [ config.packageOverlay ];
   });
 

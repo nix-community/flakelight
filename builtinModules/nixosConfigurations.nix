@@ -38,7 +38,7 @@ in
       outputs.nixosConfigurations = configs;
 
       checks = pkgs: mkMerge (mapAttrsToList
-        (n: v: mkIf (pkgs.system == v.pkgs.system) {
+        (n: v: mkIf (pkgs.system == v.pkgs.stdenv.buildPlatform.system) {
           # Wrapping the drv is needed as computing its name is expensive
           # If not wrapped, it slows down `nix flake show` significantly
           "nixos-${n}" = pkgs.runCommand "check-nixos-${n}" { }

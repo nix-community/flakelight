@@ -998,8 +998,10 @@ For example:
   outputs = { flakelight, ... }:
     flakelight ./. ({ lib, config, ... }: {
       nixosConfigurations.test-system = {
-        system = "x86_64-linux";
-        modules = [{ system.stateVersion = "24.05"; }];
+        modules = [{
+          nixpkgs.hostPlatform.system = "x86_64-linux";
+          system.stateVersion = "25.05";
+        }];
       };
     });
 }

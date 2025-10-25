@@ -730,8 +730,10 @@ in
   nixosConfigurations = test
     (flakelight ./empty ({ lib, ... }: {
       nixosConfigurations.test = {
-        system = "x86_64-linux";
-        modules = [{ system.stateVersion = "24.05"; }];
+        modules = [{
+          nixpkgs.hostPlatform.system = "x86_64-linux";
+          system.stateVersion = "25.05";
+        }];
       };
     }))
     (f: f ? nixosConfigurations.test.config.system.build.toplevel);
@@ -739,8 +741,10 @@ in
   nixosConfigurationsManual = test
     (flakelight ./empty ({ lib, ... }: {
       nixosConfigurations.test = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        modules = [{ system.stateVersion = "24.05"; }];
+        modules = [{
+          nixpkgs.hostPlatform.system = "x86_64-linux";
+          system.stateVersion = "25.05";
+        }];
       };
     }))
     (f: f ? nixosConfigurations.test.config.system.build.toplevel);
@@ -752,7 +756,8 @@ in
         modules = [
           config.propagationModule
           ({ flake, ... }: {
-            system.stateVersion = "24.05";
+            nixpkgs.hostPlatform.system = "x86_64-linux";
+            system.stateVersion = "25.05";
             environment.variables = {
               TEST1 = flake.inputs.nixpkgs.legacyPackages.x86_64-linux.hello;
               TEST2 = flake.inputs'.nixpkgs.legacyPackages.hello;

@@ -7,7 +7,6 @@ let
   inherit (builtins) mapAttrs;
   inherit (lib) mapAttrsToList mkIf mkMerge mkOption;
   inherit (lib.types) attrs lazyAttrsOf;
-  inherit (flakelight) selectAttr;
   inherit (flakelight.types) optCallWith;
 
   # Avoid checking if toplevel is a derivation as it causes the nixos modules
@@ -17,9 +16,11 @@ let
   mkNixos = hostname: cfg: inputs.nixpkgs.lib.nixosSystem (cfg // {
     specialArgs = {
       inherit inputs hostname;
-      inputs' = mapAttrs (_: selectAttr cfg.system) inputs;
     } // cfg.specialArgs or { };
-    modules = [ config.propagationModule ] ++ cfg.modules or [ ];
+    modules = [
+      config.propagationModule
+      ({ flake, ... }: { _module.args = { inherit (flake) inputs'; }; })
+    ] ++ cfg.modules or [ ];
   });
 
   configs = mapAttrs
@@ -37,7 +38,7 @@ in
       outputs.nixosConfigurations = configs;
 
       checks = pkgs: mkMerge (mapAttrsToList
-        (n: v: mkIf (pkgs.system == v.config.nixpkgs.system) {
+        (n: v: mkIf (pkgs.system == v.pkgs.system) {
           # Wrapping the drv is needed as computing its name is expensive
           # If not wrapped, it slows down `nix flake show` significantly
           "nixos-${n}" = pkgs.runCommand "check-nixos-${n}" { }

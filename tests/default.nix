@@ -168,6 +168,17 @@ in
     })
     (f: (builtins.attrNames f.test) == [ "aarch64-linux" "x86_64-linux" ]);
 
+  nixpkgsOverlays = test
+    (flakelight ./empty {
+      nixpkgs.overlays = [
+        (final: prev: { testValue = "tr"; })
+        (final: prev: { testValue2 = "ue"; })
+      ];
+      package = { writeText, testValue, testValue2 }:
+        writeText "test" "${testValue}${testValue2}";
+    })
+    (f: import f.packages.x86_64-linux.default);
+
   withOverlays = test
     (flakelight ./empty {
       withOverlays = final: prev: { testValue = "true"; };

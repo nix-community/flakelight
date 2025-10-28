@@ -317,6 +317,16 @@ option as follows:
 }
 ```
 
+### nixpkgs.overlays
+
+```
+Type: [Overlay]
+```
+
+This allows you to apply overlays to the Nixpkgs instance used for building
+packages and calling perSystem. `withOverlays` is a more flexible version of
+this option.
+
 ### withOverlays
 
 ```

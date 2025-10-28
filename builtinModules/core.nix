@@ -28,7 +28,7 @@ let
   pkgsFor = genAttrs config.systems (system: import inputs.nixpkgs {
     inherit (config.nixpkgs) config;
     localSystem = { inherit system; };
-    overlays = config.withOverlays ++ [ config.packageOverlay ];
+    overlays = config.nixpkgs.overlays ++ [ config.packageOverlay ];
   });
 
   genSystems = f: genAttrs config.systems (system: f pkgsFor.${system});
@@ -66,9 +66,16 @@ in
       default = _: { };
     };
 
-    nixpkgs.config = mkOption {
-      type = lazyAttrsOf raw;
-      default = { };
+    nixpkgs = {
+      config = mkOption {
+        type = lazyAttrsOf raw;
+        default = { };
+      };
+
+      overlays = mkOption {
+        type = listOf overlay;
+        default = [ ];
+      };
     };
 
     withOverlays = mkOption {
@@ -82,6 +89,8 @@ in
       inherit (config) inputs outputs;
       inherit pkgsFor genSystems;
     };
+
+    nixpkgs.overlays = config.withOverlays;
 
     outputs = foldAttrs mergeAttrs { } (map
       (system: mapAttrs

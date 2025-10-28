@@ -372,6 +372,27 @@ You can use the values from the overlays with other options:
 }
 ```
 
+### nixpkgs.patches
+
+```
+Type: [path]
+```
+
+This allows you to apply patches to the Nixpkgs instance used for building
+packages and calling perSystem.
+
+For example, to apply a patch in the same directory named `fix-hello.patch`:
+
+```nix
+{
+  inputs.flakelight.url = "github:nix-community/flakelight";
+  outputs = { flakelight, ... }:
+    flakelight ./. {
+      nixpkgs.patches = [ ./fix-hello.patch ];
+    };
+}
+```
+
 ### packages
 
 ```

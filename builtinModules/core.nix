@@ -10,7 +10,7 @@ let
     subtractLists;
   inherit (lib.types) coercedTo functionTo lazyAttrsOf listOf nonEmptyStr raw
     uniq;
-  inherit (flakelight.types) function optCallWith overlay;
+  inherit (flakelight.types) function optCallWith overlay path;
 
   outputs = mkOptionType {
     name = "outputs";
@@ -25,7 +25,19 @@ let
           " in ${showFiles (getFiles defs)}");
   };
 
-  pkgsFor = genAttrs config.systems (system: import inputs.nixpkgs {
+  applyPatches = system: inputs.nixpkgs.legacyPackages.${system}.applyPatches;
+
+  patchedNixpkgs = system: applyPatches system {
+    src = inputs.nixpkgs;
+    name = "nixpkgs-patched";
+    inherit (config.nixpkgs) patches;
+  };
+
+  patchedNixpkgs' = system:
+    if config.nixpkgs.patches == [ ]
+    then inputs.nixpkgs else patchedNixpkgs system;
+
+  pkgsFor = genAttrs config.systems (system: import (patchedNixpkgs' system) {
     inherit (config.nixpkgs) config;
     localSystem = { inherit system; };
     overlays = config.nixpkgs.overlays ++ [ config.packageOverlay ];
@@ -74,6 +86,11 @@ in
 
       overlays = mkOption {
         type = listOf overlay;
+        default = [ ];
+      };
+
+      patches = mkOption {
+        type = listOf path;
         default = [ ];
       };
     };

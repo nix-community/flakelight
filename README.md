@@ -40,12 +40,14 @@ The following third-party modules are also available:
 - [flakelight-elisp][] for flakes providing Emacs lisp package(s)
 - [flakelight-darwin][] for nix-darwin configs
 - [flakelight-haskell][] for Haskell projects
+- [flakelight-treefmt][] for treefmt-nix integration
 
 [flakelight-rust]: https://github.com/accelbread/flakelight-rust
 [flakelight-zig]: https://github.com/accelbread/flakelight-zig
 [flakelight-elisp]: https://github.com/accelbread/flakelight-elisp
 [flakelight-darwin]: https://github.com/cmacrae/flakelight-darwin
 [flakelight-haskell]: https://github.com/hezhenxing/flakelight-haskell
+[flakelight-treefmt]: https://github.com/m15a/flakelight-treefmt
 
 ## Contact
 

@@ -8,6 +8,7 @@ let
   inherit (lib) foldAttrs functionArgs genAttrs getFiles getValues isFunction
     mapAttrs mergeAttrs mkOption mkOptionType showFiles showOption
     subtractLists;
+  inherit (lib.lists) optional uniqueStrings;
   inherit (lib.types) coercedTo functionTo lazyAttrsOf listOf nonEmptyStr raw
     uniq;
   inherit (flakelight.types) function optCallWith overlay path;
@@ -37,13 +38,19 @@ let
     if config.nixpkgs.patches == [ ]
     then inputs.nixpkgs else patchedNixpkgs system;
 
-  pkgsFor = genAttrs config.systems (system: import (patchedNixpkgs' system) {
+  pkgsFor = genAttrs systems' (system: import (patchedNixpkgs' system) {
     inherit (config.nixpkgs) config;
     localSystem = { inherit system; };
     overlays = config.nixpkgs.overlays ++ [ config.packageOverlay ];
   });
 
-  genSystems = f: genAttrs config.systems (system: f pkgsFor.${system});
+  genSystems = f: genAttrs systems' (system: f pkgsFor.${system});
+
+  # Include current system when --impure flag is used.
+  systems' = uniqueStrings (
+    config.systems
+    ++ optional (builtins ? currentSystem) builtins.currentSystem
+  );
 
   funcToOverlayList = f:
     let

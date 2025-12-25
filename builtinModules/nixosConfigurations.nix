@@ -2,7 +2,7 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, inputs, flakelight, moduleArgs, ... }:
+{ config, lib, inputs, flakelight, moduleArgs, pkgsFor, ... }:
 let
   inherit (builtins) mapAttrs;
   inherit (lib) mapAttrsToList mkIf mkMerge mkOption;
@@ -37,13 +37,16 @@ in
     (mkIf (config.nixosConfigurations != { }) {
       outputs.nixosConfigurations = configs;
 
-      checks = pkgs: mkMerge (mapAttrsToList
-        (n: v: mkIf (pkgs.system == v.pkgs.stdenv.buildPlatform.system) {
-          # Wrapping the drv is needed as computing its name is expensive
-          # If not wrapped, it slows down `nix flake show` significantly
-          "nixos-${n}" = pkgs.runCommand "check-nixos-${n}" { }
-            "echo ${v.config.system.build.toplevel} > $out";
-        })
+      outputs.checks = mkMerge (mapAttrsToList
+        (n: v:
+          let inherit (v.pkgs.stdenv.buildPlatform) system; in
+          {
+            # Wrapping the drv is needed as computing its name is expensive
+            # If not wrapped, it slows down `nix flake show` significantly
+            ${system}."nixos-${n}" =
+              pkgsFor.${system}.runCommand "check-nixos-${n}" { }
+                "echo ${v.config.system.build.toplevel} > $out";
+          })
         configs);
     })
 

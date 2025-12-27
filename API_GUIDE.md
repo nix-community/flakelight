@@ -1014,8 +1014,8 @@ or a function that takes `moduleArgs` and returns one of the prior.
 When using a set of `nixpkgs.lib.nixosSystem` args, NixOS modules will have
 access to a `flake` module arg equivalent to `moduleArgs` plus `inputs'` and
 `outputs'`. Flakelight's pkgs attributes, `withOverlays`, and `packages` will
-also be available in the NixOS instance's pkgs, and Flakelight's
-`nixpkgs.config` will apply to it as well.
+also be available in the NixOS instance's pkgs, and Flakelight's `nixpkgs`
+config will apply to it as well.
 
 When using the result of calling `nixpkgs.lib.nixosSystem`, the
 `config.propagationModule` value can be used as a NixOS module to gain the above
@@ -1060,7 +1060,7 @@ When using a set of `homeManagerConfiguration` args, it is required to include
 be set. home-manager modules will have access to a `flake` module arg equivalent
 to `moduleArgs` plus `inputs'` and `outputs'`. Flakelight's pkgs attributes,
 `withOverlays`, and `packages` will also be available in the home-manager
-instance's pkgs.
+instance's pkgs, and Flakelight's `nixpkgs` config will apply to it as well.
 
 When using the result of calling `homeManagerConfiguration`, the
 `config.propagationModule` value can be used as a home-manager module to gain

@@ -375,7 +375,7 @@ You can use the values from the overlays with other options:
 ### nixpkgs.patches
 
 ```
-Type: [path]
+Type: [path | pathInStore]
 ```
 
 This allows you to apply patches to the Nixpkgs instance used for building

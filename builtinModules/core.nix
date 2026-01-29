@@ -9,8 +9,8 @@ let
     mapAttrs mergeAttrs mkOption mkOptionType showFiles showOption
     subtractLists;
   inherit (lib.lists) optional uniqueStrings;
-  inherit (lib.types) coercedTo functionTo lazyAttrsOf listOf nonEmptyStr raw
-    uniq;
+  inherit (lib.types) coercedTo functionTo lazyAttrsOf listOf nonEmptyStr
+    oneOf pathInStore raw uniq;
   inherit (flakelight.types) function optCallWith overlay path;
 
   outputs = mkOptionType {
@@ -97,7 +97,7 @@ in
       };
 
       patches = mkOption {
-        type = listOf path;
+        type = listOf (oneOf [ path pathInStore ]);
         default = [ ];
       };
     };

@@ -16,7 +16,7 @@ in
       let
         nixpkgs-fmt = "${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt";
         # prefer-file would be better but does not work with prose-wrap
-        prettier = "${pkgs.nodePackages.prettier}/bin/prettier --write"
+        prettier = "${pkgs.prettier}/bin/prettier --write"
           + " --cache-location=.prettiercache"
           + " --config-precedence file-override --prose-wrap always";
       in

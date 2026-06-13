@@ -79,9 +79,10 @@ in
                   [ (final: prev: genPkgs final prev pkgDefs) ];
               }).default)
             ];
-        in
-        (optionalAttrs (pkgDefs ? default) rec {
           default = genPkg final prev defaultPkgName pkgDefs.default;
+        in
+        (optionalAttrs (pkgDefs ? default) {
+          inherit default;
           ${defaultPkgName} = default;
         }) // genPkgs final prev (removeAttrs pkgDefs [ "default" ]);
 

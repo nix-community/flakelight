@@ -17,7 +17,18 @@ in
 
   config.propagationModule =
     { lib, pkgs, options, config, ... }:
-    let inherit (pkgs.stdenv.hostPlatform) system; in {
+    let
+      inherit (pkgs.stdenv.hostPlatform) system;
+      propArgs = {
+        # Give access to flakelight module args under `flake` arg.
+        # Also include inputs'/outputs' which depend on `pkgs`.
+        _module.args.flake = {
+          inputs' = mapAttrs (_: selectAttr system) inputs;
+          outputs' = selectAttr system outputs;
+        } // moduleArgs;
+      };
+    in
+    {
       config = (optionalAttrs (options ? nixpkgs) {
         nixpkgs = (optionalAttrs (options ? nixpkgs.overlays) {
           # Forward overlays to NixOS/home-manager configurations
@@ -32,16 +43,10 @@ in
       // (optionalAttrs (options ? home-manager.sharedModules) {
         # Propagate module to home-manager when using its nixos module
         home-manager.sharedModules =
-          optional (! config.home-manager.useGlobalPkgs)
-            flakeConfig.propagationModule;
+          if config.home-manager.useGlobalPkgs
+          then [ propArgs ]
+          else [ flakeConfig.propagationModule ];
       })
-      // {
-        # Give access to flakelight module args under `flake` arg.
-        # Also include inputs'/outputs' which depend on `pkgs`.
-        _module.args.flake = {
-          inputs' = mapAttrs (_: selectAttr system) inputs;
-          outputs' = selectAttr system outputs;
-        } // moduleArgs;
-      };
+      // propArgs;
     };
 }

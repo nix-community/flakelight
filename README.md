@@ -93,6 +93,28 @@ To use a different nixpkgs, you can instead use:
 }
 ```
 
+Without Flakelight or another flake library, a flake would have to generate
+per-system `devShells.${system}.default` attributes with shell derivations:
+
+```nix
+{
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+  outputs = { nixpkgs, ... }:
+    let
+      systems = [ "x86_64-linux" "aarch64-linux" ];
+      eachSystem = f: nixpkgs.lib.genAttrs systems
+        (system: f nixpkgs.legacyPackages.${system});
+    in
+    {
+      devShells = eachSystem (pkgs: {
+        default = pkgs.mkShell {
+          packages = [ pkgs.hello pkgs.coreutils ];
+        };
+      });
+    };
+}
+```
+
 ### Rust package
 
 The following is an example flake for a Rust project using `flakelight-rust`,

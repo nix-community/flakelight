@@ -18,7 +18,7 @@ let
       options = {
         type = mkOption { type = enum [ "app" ]; default = "app"; };
         program = mkOption { type = pathInStore // { check = isStorePath; }; };
-        meta.description = mkOption { type = nullable str; default = null; };
+        meta.description = mkOption { type = str; default = ""; };
       };
     }];
   };
@@ -59,11 +59,6 @@ let
     nestedTypes.coercedType = stringLike;
     nestedTypes.finalType = app;
   }));
-
-  cleanApp = app:
-    if app.meta.description == null then {
-      inherit (app) type program;
-    } else app;
 in
 {
   options = {
@@ -85,7 +80,7 @@ in
 
     (mkIf (config.apps != null) {
       outputs.apps = genSystems (pkgs:
-        mapAttrs (_: v: cleanApp (v pkgs)) (config.apps pkgs));
+        mapAttrs (_: v: v pkgs) (config.apps pkgs));
     })
   ];
 }

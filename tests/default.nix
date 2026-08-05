@@ -520,6 +520,7 @@ in
     (f: (f.apps.x86_64-linux.default == {
       type = "app";
       program = "${nixpkgs.legacyPackages.x86_64-linux.hello}/bin/hello";
+      meta.description = "";
     }));
 
   app-fn = test
@@ -532,6 +533,7 @@ in
     (f: (f.apps.x86_64-linux.default == {
       type = "app";
       program = "${nixpkgs.legacyPackages.x86_64-linux.hello}/bin/hello";
+      meta.description = "";
     }));
 
   app-string = test
@@ -542,6 +544,7 @@ in
     (f: (f.apps.x86_64-linux.default == {
       type = "app";
       program = "${nixpkgs.legacyPackages.x86_64-linux.hello}/bin/hello";
+      meta.description = "";
     }));
 
   app-string-fn = test
@@ -552,6 +555,7 @@ in
     (f: (f.apps.x86_64-linux.default == {
       type = "app";
       program = "${nixpkgs.legacyPackages.x86_64-linux.hello}/bin/hello";
+      meta.description = "";
     }));
 
   app-no-type = test
@@ -563,6 +567,7 @@ in
     (f: (f.apps.x86_64-linux.default == {
       type = "app";
       program = "${nixpkgs.legacyPackages.x86_64-linux.hello}/bin/hello";
+      meta.description = "";
     }));
 
   app-description = test
@@ -591,10 +596,12 @@ in
       emacs = {
         type = "app";
         program = "${nixpkgs.legacyPackages.x86_64-linux.emacs}/bin/emacs";
+        meta.description = "";
       };
       bash = {
         type = "app";
         program = "${nixpkgs.legacyPackages.x86_64-linux.bash}/bin/bash";
+        meta.description = "";
       };
     });
 
@@ -610,10 +617,12 @@ in
       emacs = {
         type = "app";
         program = "${nixpkgs.legacyPackages.x86_64-linux.emacs}/bin/emacs";
+        meta.description = "";
       };
       bash = {
         type = "app";
         program = "${nixpkgs.legacyPackages.x86_64-linux.bash}/bin/bash";
+        meta.description = "";
       };
     });
 

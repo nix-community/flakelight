@@ -5,7 +5,8 @@
 {
   description =
     "A modular Nix flake framework for simplifying flake definitions";
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs.nixpkgs.url =
+    "https://channels.nixos.org/nixos-unstable/nixexprs.tar.zst";
   outputs = inputs:
     let lib = import ./. inputs; in
     lib.mkFlake ./. {

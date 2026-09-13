@@ -1,5 +1,45 @@
 # API Guide
 
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
+**Table of Contents**
+
+- [API Guide](#api-guide)
+  - [lib](#lib)
+    - [mkFlake](#mkflake)
+  - [Module arguments](#module-arguments)
+  - [Additional pkgs values](#additional-pkgs-values)
+  - [Module options](#module-options)
+    - [inputs](#inputs)
+    - [systems](#systems)
+    - [nixDir](#nixdir)
+    - [outputs](#outputs)
+    - [perSystem](#persystem)
+    - [nixpkgs.config](#nixpkgsconfig)
+    - [nixpkgs.overlays](#nixpkgsoverlays)
+    - [withOverlays](#withoverlays)
+    - [nixpkgs.patches](#nixpkgspatches)
+    - [packages](#packages)
+    - [devShell](#devshell)
+    - [devShells](#devshells)
+    - [overlays](#overlays)
+    - [checks](#checks)
+    - [apps](#apps)
+    - [templates](#templates)
+    - [legacyPackages](#legacypackages)
+    - [formatter](#formatter)
+    - [formatters](#formatters)
+    - [bundlers](#bundlers)
+    - [nixosConfigurations](#nixosconfigurations)
+    - [homeConfigurations](#homeconfigurations)
+    - [nixosModules, homeModules, and flakelightModules](#nixosmodules-homemodules-and-flakelightmodules)
+    - [lib](#lib-1)
+    - [functor](#functor)
+    - [meta](#meta)
+    - [flakelight](#flakelight)
+
+<!-- markdown-toc end -->
+
+
 ## lib
 
 This section covers important functions available in Flakelight's lib attribute.

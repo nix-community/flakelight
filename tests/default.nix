@@ -558,6 +558,13 @@ in
       meta.description = "";
     }));
 
+  app-content-addressed = test
+    (flakelight ./empty {
+      inputs = { inherit nixpkgs; };
+      app = builtins.placeholder "out";
+    })
+    (f: f.apps.x86_64-linux.default.program == builtins.placeholder "out");
+
   app-no-type = test
     (flakelight ./empty {
       app = {

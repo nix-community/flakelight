@@ -11,7 +11,10 @@ let
     optionDescriptionPhrase pathInStore str submoduleWith;
   inherit (flakelight.types) nullable optFunctionTo stringLike;
 
-  isStorePath = s: match "${storeDir}/[^.][^ \n]*" s != null;
+  isStorePath = s:
+    match "${storeDir}/[^.][^ \n]*" s != null
+    # ca-derivation outputs have placeholders without storeDir until built
+    || match "/[0-9a-z]{52}(/[^ \n]*)?" s != null;
 
   app = submoduleWith {
     modules = [{

@@ -2,66 +2,110 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, flakelight, genSystems, ... }:
+{
+  config,
+  lib,
+  flakelight,
+  genSystems,
+  ...
+}:
 let
   inherit (builtins) match storeDir;
-  inherit (lib) defaultFunctor fix isFunction last mapAttrs mergeDefinitions
-    mkIf mkMerge mkOption mkOptionType;
-  inherit (lib.types) coercedTo enum lazyAttrsOf
-    optionDescriptionPhrase pathInStore str submoduleWith;
+  inherit (lib)
+    defaultFunctor
+    fix
+    isFunction
+    last
+    mapAttrs
+    mergeDefinitions
+    mkIf
+    mkMerge
+    mkOption
+    mkOptionType
+    singleton
+    ;
+  inherit (lib.types)
+    coercedTo
+    enum
+    lazyAttrsOf
+    optionDescriptionPhrase
+    pathInStore
+    str
+    submoduleWith
+    ;
   inherit (flakelight.types) nullable optFunctionTo stringLike;
 
-  isStorePath = s:
+  isStorePath =
+    s:
     match "${storeDir}/[^.][^ \n]*" s != null
     # ca-derivation outputs have placeholders without storeDir until built
     || match "/[0-9a-z]{52}(/[^ \n]*)?" s != null;
 
   app = submoduleWith {
-    modules = [{
+    modules = singleton {
       options = {
-        type = mkOption { type = enum [ "app" ]; default = "app"; };
-        program = mkOption { type = pathInStore // { check = isStorePath; }; };
-        meta.description = mkOption { type = str; default = ""; };
+        type = mkOption {
+          type = enum [ "app" ];
+          default = "app";
+        };
+        program = mkOption {
+          type = pathInStore // {
+            check = isStorePath;
+          };
+        };
+        meta.description = mkOption {
+          type = str;
+          default = "";
+        };
       };
-    }];
+    };
   };
 
-  mkApp = name: pkgs: s:
-    let s' = "${s}"; in {
+  mkApp =
+    name: pkgs: s:
+    let
+      s' = "${s}";
+    in
+    {
       program =
-        if isStorePath s' then s'
-        else "${pkgs.writeShellScript "app-${name}" s'}";
+        if isStorePath s' then s' else "${pkgs.writeShellScript "app-${name}" s'}";
     };
 
   parameterize = value: fn: fix fn value;
 
-  appType = parameterize app (self': app: (mkOptionType rec {
-    name = "appType";
-    description =
-      let
-        targetDesc = optionDescriptionPhrase
-          (class: class == "noun" || class == "composite")
-          (coercedTo stringLike (abort "") app);
-      in
-      "${targetDesc} or function that evaluates to it";
-    descriptionClass = "composite";
-    check = x: isFunction x || app.check x || stringLike.check x;
-    merge = loc: defs: pkgs:
-      let
-        targetType = coercedTo stringLike (mkApp (last loc) pkgs) app;
-      in
-      (mergeDefinitions loc targetType (map
-        (fn: {
-          inherit (fn) file;
-          value = if isFunction fn.value then fn.value pkgs else fn.value;
-        })
-        defs)).mergedValue;
-    inherit (app) getSubOptions getSubModules;
-    substSubModules = m: self' (app.substSubModules m);
-    functor = (defaultFunctor name) // { wrapped = app; };
-    nestedTypes.coercedType = stringLike;
-    nestedTypes.finalType = app;
-  }));
+  appType = parameterize app (
+    self': app:
+    (mkOptionType rec {
+      name = "appType";
+      description =
+        let
+          targetDesc = optionDescriptionPhrase (
+            class: class == "noun" || class == "composite"
+          ) (coercedTo stringLike (abort "") app);
+        in
+        "${targetDesc} or function that evaluates to it";
+      descriptionClass = "composite";
+      check = x: isFunction x || app.check x || stringLike.check x;
+      merge =
+        loc: defs: pkgs:
+        let
+          targetType = coercedTo stringLike (mkApp (last loc) pkgs) app;
+        in
+        (mergeDefinitions loc targetType (
+          map (fn: {
+            inherit (fn) file;
+            value = if isFunction fn.value then fn.value pkgs else fn.value;
+          }) defs
+        )).mergedValue;
+      inherit (app) getSubOptions getSubModules;
+      substSubModules = m: self' (app.substSubModules m);
+      functor = (defaultFunctor name) // {
+        wrapped = app;
+      };
+      nestedTypes.coercedType = stringLike;
+      nestedTypes.finalType = app;
+    })
+  );
 in
 {
   options = {
@@ -82,8 +126,7 @@ in
     })
 
     (mkIf (config.apps != null) {
-      outputs.apps = genSystems (pkgs:
-        mapAttrs (_: v: v pkgs) (config.apps pkgs));
+      outputs.apps = genSystems (pkgs: mapAttrs (_: v: v pkgs) (config.apps pkgs));
     })
   ];
 }

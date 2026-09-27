@@ -2,63 +2,113 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, inputs, lib, flakelight, moduleArgs, ... }:
+{
+  config,
+  inputs,
+  lib,
+  flakelight,
+  moduleArgs,
+  ...
+}:
 let
-  inherit (builtins) all attrNames head isAttrs length;
-  inherit (lib) foldAttrs functionArgs genAttrs getFiles getValues isFunction
-    mapAttrs mergeAttrs mkOption mkOptionType showFiles showOption
-    subtractLists;
+  inherit (builtins)
+    all
+    attrNames
+    head
+    isAttrs
+    length
+    ;
+  inherit (lib)
+    foldAttrs
+    functionArgs
+    genAttrs
+    getFiles
+    getValues
+    isFunction
+    mapAttrs
+    mergeAttrs
+    mkOption
+    mkOptionType
+    showFiles
+    showOption
+    subtractLists
+    ;
   inherit (lib.lists) optional uniqueStrings;
-  inherit (lib.types) coercedTo functionTo lazyAttrsOf listOf nonEmptyStr
-    oneOf pathInStore raw uniq;
-  inherit (flakelight.types) function optCallWith overlay path;
+  inherit (lib.types)
+    coercedTo
+    functionTo
+    lazyAttrsOf
+    listOf
+    nonEmptyStr
+    oneOf
+    pathInStore
+    raw
+    uniq
+    ;
+  inherit (flakelight.types)
+    function
+    optCallWith
+    overlay
+    path
+    ;
 
   outputs = mkOptionType {
     name = "outputs";
     description = "output values";
     descriptionClass = "noun";
-    merge = loc: defs:
-      if (length defs) == 1 then (head defs).value
+    merge =
+      loc: defs:
+      if (length defs) == 1 then
+        (head defs).value
       else if all isAttrs (getValues defs) then
         (lazyAttrsOf outputs).merge loc defs
       else
-        throw ("The option `${showOption loc}' has conflicting definitions" +
-          " in ${showFiles (getFiles defs)}");
+        throw (
+          "The option `${showOption loc}' has conflicting definitions"
+          + " in ${showFiles (getFiles defs)}"
+        );
   };
 
   applyPatches = system: inputs.nixpkgs.legacyPackages.${system}.applyPatches;
 
-  patchedNixpkgs = system: applyPatches system {
-    src = inputs.nixpkgs;
-    name = "nixpkgs-patched";
-    inherit (config.nixpkgs) patches;
-  };
+  patchedNixpkgs =
+    system:
+    applyPatches system {
+      src = inputs.nixpkgs;
+      name = "nixpkgs-patched";
+      inherit (config.nixpkgs) patches;
+    };
 
-  patchedNixpkgs' = system:
-    if config.nixpkgs.patches == [ ]
-    then inputs.nixpkgs else patchedNixpkgs system;
+  patchedNixpkgs' =
+    system:
+    if config.nixpkgs.patches == [ ] then
+      inputs.nixpkgs
+    else
+      patchedNixpkgs system;
 
-  pkgsFor = genAttrs systems' (system: import (patchedNixpkgs' system) {
-    inherit (config.nixpkgs) config;
-    localSystem = { inherit system; };
-    overlays = config.nixpkgs.overlays ++ [ config.packageOverlay ];
-  });
+  pkgsFor = genAttrs systems' (
+    system:
+    import (patchedNixpkgs' system) {
+      inherit (config.nixpkgs) config;
+      localSystem = { inherit system; };
+      overlays = config.nixpkgs.overlays ++ [ config.packageOverlay ];
+    }
+  );
 
   genSystems = f: genAttrs systems' (system: f pkgsFor.${system});
 
   # Include current system when --impure flag is used.
   systems' = uniqueStrings (
-    config.systems
-    ++ optional (builtins ? currentSystem) builtins.currentSystem
+    config.systems ++ optional (builtins ? currentSystem) builtins.currentSystem
   );
 
-  funcToOverlayList = f:
+  funcToOverlayList =
+    f:
     let
       fArgs = attrNames (functionArgs f);
       mArgs = attrNames moduleArgs;
       fApplied = f moduleArgs;
-      isOverlay = (subtractLists mArgs fArgs != [ ])
-        || isFunction fApplied;
+      isOverlay = (subtractLists mArgs fArgs != [ ]) || isFunction fApplied;
     in
     if isOverlay then [ f ] else fApplied;
 
@@ -72,7 +122,10 @@ in
 
     systems = mkOption {
       type = uniq (listOf nonEmptyStr);
-      default = [ "x86_64-linux" "aarch64-linux" ];
+      default = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
     };
 
     outputs = mkOption {
@@ -97,7 +150,10 @@ in
       };
 
       patches = mkOption {
-        type = listOf (oneOf [ path pathInStore ]);
+        type = listOf (oneOf [
+          path
+          pathInStore
+        ]);
         default = [ ];
       };
     };
@@ -116,10 +172,11 @@ in
 
     nixpkgs.overlays = config.withOverlays;
 
-    outputs = foldAttrs mergeAttrs { } (map
-      (system: mapAttrs
-        (_: v: { ${system} = v; })
-        (config.perSystem pkgsFor.${system}))
-      config.systems);
+    outputs = foldAttrs mergeAttrs { } (
+      map (
+        system:
+        mapAttrs (_: v: { ${system} = v; }) (config.perSystem pkgsFor.${system})
+      ) config.systems
+    );
   };
 }

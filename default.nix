@@ -6,39 +6,84 @@ inputs:
 let
   inherit (inputs) nixpkgs;
   inherit (builtins) isAttrs isPath readDir;
-  inherit (nixpkgs.lib) all attrNames composeManyExtensions evalModules filter
-    fix genAttrs getValues hasSuffix isDerivation isFunction isStringLike
-    mapAttrs mapAttrsToList mkDefault mkOptionType pathExists pipe removePrefix
-    removeSuffix singleton;
-  inherit (nixpkgs.lib.types) coercedTo defaultFunctor functionTo listOf
-    optionDescriptionPhrase;
+  inherit (nixpkgs.lib)
+    all
+    attrNames
+    composeManyExtensions
+    evalModules
+    filter
+    fix
+    genAttrs
+    getValues
+    hasSuffix
+    isDerivation
+    isFunction
+    isStringLike
+    mapAttrs
+    mapAttrsToList
+    mkDefault
+    mkOptionType
+    pathExists
+    pipe
+    removePrefix
+    removeSuffix
+    singleton
+    ;
+  inherit (nixpkgs.lib.types)
+    coercedTo
+    defaultFunctor
+    functionTo
+    listOf
+    optionDescriptionPhrase
+    ;
   inherit (nixpkgs.lib.options) mergeEqualOption mergeOneOption;
 
-  builtinModules = mapAttrsToList (k: _: ./builtinModules + ("/" + k))
-    (readDir ./builtinModules);
+  builtinModules = mapAttrsToList (k: _: ./builtinModules + ("/" + k)) (
+    readDir ./builtinModules
+  );
 
   mkFlake = {
-    __functor = self: src: root: (evalModules {
-      specialArgs.modulesPath = ./builtinModules;
-      modules = builtinModules ++ self.extraModules ++ [
-        { inputs.nixpkgs = mkDefault nixpkgs; }
-        { inputs.flakelight = mkDefault inputs.self; }
-        { _module.args = { inherit src flakelight; }; }
-        root
-      ];
-    }).config.outputs;
+    __functor =
+      self: src: root:
+      (evalModules {
+        specialArgs.modulesPath = ./builtinModules;
+        modules =
+          builtinModules
+          ++ self.extraModules
+          ++ [
+            { inputs.nixpkgs = mkDefault nixpkgs; }
+            { inputs.flakelight = mkDefault inputs.self; }
+            { _module.args = { inherit src flakelight; }; }
+            root
+          ];
+      }).config.outputs;
 
     # mkFlake.extend takes a list of flakelight modules, and returns an mkFlake
     # that automatically includes those modules.
-    extend = (fix (extend': mkFlake': modules: fix (self: mkFlake' // {
-      extraModules = mkFlake'.extraModules ++ modules;
-      extend = extend' self;
-    }))) mkFlake;
+    extend =
+      (fix (
+        extend': mkFlake': modules:
+        fix (
+          self:
+          mkFlake'
+          // {
+            extraModules = mkFlake'.extraModules ++ modules;
+            extend = extend' self;
+          }
+        )
+      ))
+        mkFlake;
     extraModules = [ ];
   };
 
   flakelight = {
-    inherit importDir importDirPaths mkFlake selectAttr types;
+    inherit
+      importDir
+      importDirPaths
+      mkFlake
+      selectAttr
+      types
+      ;
   };
 
   types = rec {
@@ -107,68 +152,85 @@ let
 
     optListOf = elemType: coercedTo elemType singleton (listOf elemType);
 
-    coercedTo' = coercedType: coerceFunc: finalType:
-      (coercedTo coercedType coerceFunc finalType) // {
-        merge = loc: defs:
+    coercedTo' =
+      coercedType: coerceFunc: finalType:
+      (coercedTo coercedType coerceFunc finalType)
+      // {
+        merge =
+          loc: defs:
           let
-            coerceVal = val:
-              if finalType.check val then val
-              else coerceFunc val;
+            coerceVal = val: if finalType.check val then val else coerceFunc val;
           in
-          finalType.merge loc
-            (map (def: def // { value = coerceVal def.value; }) defs);
+          finalType.merge loc (map (def: def // { value = coerceVal def.value; }) defs);
       };
 
-    optFunctionTo = elemType:
+    optFunctionTo =
+      elemType:
       let
         nonFunction = mkOptionType {
           name = "nonFunction";
           description = "non-function";
           descriptionClass = "noun";
-          check = x: ! isFunction x && elemType.check x;
+          check = x: !isFunction x && elemType.check x;
           merge = mergeOneOption;
         };
       in
-      coercedTo nonFunction (x: _: x)
-        (functionTo elemType);
+      coercedTo nonFunction (x: _: x) (functionTo elemType);
 
     optCallWith = args: elemType: coercedTo function (x: x args) elemType;
 
-    nullable = elemType: mkOptionType {
-      name = "nullable";
-      description = "nullable ${optionDescriptionPhrase
-        (class: class == "noun" || class == "composite") elemType}";
-      descriptionClass = "noun";
-      check = x: x == null || elemType.check x;
-      merge = loc: defs:
-        if all (def: def.value == null) defs then null
-        else elemType.merge loc (filter (def: def.value != null) defs);
-      emptyValue.value = null;
-      inherit (elemType) getSubOptions getSubModules;
-      substSubModules = m: nullable (elemType.substSubModules m);
-      functor = (defaultFunctor "nullable") // {
-        type = nullable;
-        wrapped = elemType;
+    nullable =
+      elemType:
+      mkOptionType {
+        name = "nullable";
+        description = "nullable ${
+          optionDescriptionPhrase (
+            class: class == "noun" || class == "composite"
+          ) elemType
+        }";
+        descriptionClass = "noun";
+        check = x: x == null || elemType.check x;
+        merge =
+          loc: defs:
+          if all (def: def.value == null) defs then
+            null
+          else
+            elemType.merge loc (filter (def: def.value != null) defs);
+        emptyValue.value = null;
+        inherit (elemType) getSubOptions getSubModules;
+        substSubModules = m: nullable (elemType.substSubModules m);
+        functor = (defaultFunctor "nullable") // {
+          type = nullable;
+          wrapped = elemType;
+        };
+        nestedTypes = { inherit elemType; };
       };
-      nestedTypes = { inherit elemType; };
-    };
   };
 
   importDir = path: mapAttrs (_: import) (importDirPaths path);
 
-  importDirPaths = path: genAttrs
-    (pipe (readDir path) [
-      attrNames
-      (filter (s: s != "default.nix"))
-      (filter (s: (hasSuffix ".nix" s)
-        || pathExists (path + "/${s}/default.nix")))
-      (map (removeSuffix ".nix"))
-      (map (removePrefix "_"))
-    ])
-    (p: path +
-      (if pathExists (path + "/_${p}.nix") then "/_${p}.nix"
-      else if pathExists (path + "/${p}.nix") then "/${p}.nix"
-      else "/${p}"));
+  importDirPaths =
+    path:
+    genAttrs
+      (pipe (readDir path) [
+        attrNames
+        (filter (s: s != "default.nix"))
+        (filter (s: (hasSuffix ".nix" s) || pathExists (path + "/${s}/default.nix")))
+        (map (removeSuffix ".nix"))
+        (map (removePrefix "_"))
+      ])
+      (
+        p:
+        path
+        + (
+          if pathExists (path + "/_${p}.nix") then
+            "/_${p}.nix"
+          else if pathExists (path + "/${p}.nix") then
+            "/${p}.nix"
+          else
+            "/${p}"
+        )
+      );
 
   selectAttr = attr: mapAttrs (_: v: v.${attr} or { });
 in

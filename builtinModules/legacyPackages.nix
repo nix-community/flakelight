@@ -2,7 +2,13 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, flakelight, genSystems, ... }:
+{
+  config,
+  lib,
+  flakelight,
+  genSystems,
+  ...
+}:
 let
   inherit (lib) mkIf mkOption;
   inherit (lib.types) functionTo pkgs;

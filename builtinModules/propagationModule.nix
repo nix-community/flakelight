@@ -5,18 +5,40 @@
 # This provides a module that can be added to module systems nested inside of
 # flakelight, for example NixOS or home-manager configurations.
 
-{ lib, config, flakelight, moduleArgs, inputs, outputs, ... }:
+{
+  lib,
+  config,
+  flakelight,
+  moduleArgs,
+  inputs,
+  outputs,
+  ...
+}:
 let
-  inherit (lib) mapAttrs mkOption optional optionalAttrs;
+  inherit (lib)
+    mapAttrs
+    mkOption
+    optional
+    optionalAttrs
+    ;
   inherit (flakelight) selectAttr;
   inherit (flakelight.types) module;
   flakeConfig = config;
 in
 {
-  options.propagationModule = mkOption { type = module; internal = true; };
+  options.propagationModule = mkOption {
+    type = module;
+    internal = true;
+  };
 
   config.propagationModule =
-    { lib, pkgs, options, config, ... }:
+    {
+      lib,
+      pkgs,
+      options,
+      config,
+      ...
+    }:
     let
       inherit (pkgs.stdenv.hostPlatform) system;
       propArgs = {
@@ -25,28 +47,33 @@ in
         _module.args.flake = {
           inputs' = mapAttrs (_: selectAttr system) inputs;
           outputs' = selectAttr system outputs;
-        } // moduleArgs;
+        }
+        // moduleArgs;
       };
     in
     {
-      config = (optionalAttrs (options ? nixpkgs) {
-        nixpkgs = (optionalAttrs (options ? nixpkgs.overlays) {
-          # Forward overlays to NixOS/home-manager configurations
-          overlays = lib.mkOrder 10
-            (flakeConfig.withOverlays ++ [ flakeConfig.packageOverlay ]);
+      config =
+        (optionalAttrs (options ? nixpkgs) {
+          nixpkgs =
+            (optionalAttrs (options ? nixpkgs.overlays) {
+              # Forward overlays to NixOS/home-manager configurations
+              overlays = lib.mkOrder 10 (
+                flakeConfig.withOverlays ++ [ flakeConfig.packageOverlay ]
+              );
+            })
+            // (optionalAttrs (options ? nixpkgs.config) {
+              # Forward nixpkgs.config to NixOS/home-manager configurations
+              inherit (flakeConfig.nixpkgs) config;
+            });
         })
-        // (optionalAttrs (options ? nixpkgs.config) {
-          # Forward nixpkgs.config to NixOS/home-manager configurations
-          inherit (flakeConfig.nixpkgs) config;
-        });
-      })
-      // (optionalAttrs (options ? home-manager.sharedModules) {
-        # Propagate module to home-manager when using its nixos module
-        home-manager.sharedModules =
-          if config.home-manager.useGlobalPkgs
-          then [ propArgs ]
-          else [ flakeConfig.propagationModule ];
-      })
-      // propArgs;
+        // (optionalAttrs (options ? home-manager.sharedModules) {
+          # Propagate module to home-manager when using its nixos module
+          home-manager.sharedModules =
+            if config.home-manager.useGlobalPkgs then
+              [ propArgs ]
+            else
+              [ flakeConfig.propagationModule ];
+        })
+        // propArgs;
     };
 }

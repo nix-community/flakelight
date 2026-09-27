@@ -10,4 +10,6 @@ let
   lockFound = pathExists (src + "/flake.lock");
   autoInputs = if lockFound then lock2inputs src else { };
 in
-{ config.inputs = mapAttrs (_: mkOverride 950) autoInputs; }
+{
+  config.inputs = mapAttrs (_: mkOverride 950) autoInputs;
+}

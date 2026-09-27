@@ -35,26 +35,17 @@ metadata and common tooling to set flakelight options.
 
 The following third-party modules are also available:
 
-- [flakelight-rust][] for Rust projects
-- [flakelight-zig][] for Zig projects
-- [flakelight-elisp][] for flakes providing Emacs lisp package(s)
-- [flakelight-darwin][] for nix-darwin configs
-- [flakelight-haskell][] for Haskell projects
-- [flakelight-treefmt][] for treefmt-nix integration
-
-[flakelight-rust]: https://github.com/accelbread/flakelight-rust
-[flakelight-zig]: https://github.com/accelbread/flakelight-zig
-[flakelight-elisp]: https://github.com/accelbread/flakelight-elisp
-[flakelight-darwin]: https://github.com/cmacrae/flakelight-darwin
-[flakelight-haskell]: https://github.com/hezhenxing/flakelight-haskell
-[flakelight-treefmt]: https://github.com/m15a/flakelight-treefmt
+- [flakelight-rust] for Rust projects
+- [flakelight-zig] for Zig projects
+- [flakelight-elisp] for flakes providing Emacs lisp package(s)
+- [flakelight-darwin] for nix-darwin configs
+- [flakelight-haskell] for Haskell projects
+- [flakelight-treefmt] for treefmt-nix integration
 
 ## Contact
 
 Feel free to ask for help or other questions in the issues/discussions, or reach
 out on Matrix at [#flakelight:nixos.org][matrix-flakelight].
-
-[matrix-flakelight]: https://matrix.to/#/#flakelight:nixos.org
 
 ## Examples
 
@@ -157,9 +148,6 @@ Equivalently, you can just import the `flakelight-rust` module as follows:
 See [flakelight-rust.nix][flakelight-rust] to see how you could configure it
 without the module.
 
-[flakelight-rust]:
-  https://github.com/accelbread/flakelight-rust/blob/master/flakelight-rust.nix
-
 ### C application
 
 The following example flake is for a C project with a simple `make` setup.
@@ -250,3 +238,11 @@ stdenv.mkDerivation {
 ## Related Resources
 
 - [Comparison to flake-parts](https://discourse.nixos.org/t/flakelight-a-new-modular-flake-framework/32395/3)
+
+[flakelight-darwin]: https://github.com/cmacrae/flakelight-darwin
+[flakelight-elisp]: https://github.com/accelbread/flakelight-elisp
+[flakelight-haskell]: https://github.com/hezhenxing/flakelight-haskell
+[flakelight-rust]: https://github.com/accelbread/flakelight-rust
+[flakelight-treefmt]: https://github.com/m15a/flakelight-treefmt
+[flakelight-zig]: https://github.com/accelbread/flakelight-zig
+[matrix-flakelight]: https://matrix.to/#/#flakelight:nixos.org

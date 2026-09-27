@@ -2,28 +2,52 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, src, lib, flakelight, genSystems, ... }:
+{
+  config,
+  src,
+  lib,
+  flakelight,
+  genSystems,
+  ...
+}:
 let
   inherit (builtins) all hasContext;
-  inherit (lib) mkDefault mkMerge mkOption mkIf mapAttrsToList;
-  inherit (lib.types) functionTo lazyAttrsOf package str;
+  inherit (lib)
+    mkDefault
+    mkMerge
+    mkOption
+    mkIf
+    mapAttrsToList
+    ;
+  inherit (lib.types)
+    functionTo
+    lazyAttrsOf
+    package
+    str
+    ;
   inherit (flakelight.types) nullable optFunctionTo;
 in
 {
   options = {
     formatter = mkOption {
       type = nullable (functionTo package);
-      default = { pkgs, lib, fd, coreutils, ... }:
+      default =
+        {
+          pkgs,
+          lib,
+          fd,
+          coreutils,
+          ...
+        }:
         let
           inherit (lib) attrValues makeBinPath;
           formatters = config.formatters pkgs;
           fullContext = all hasContext (attrValues formatters);
           packages =
-            if config.devShell == null then [ ]
-            else (config.devShell pkgs).packages pkgs;
-          caseArms = toString (mapAttrsToList
-            (n: v: "\n      ${n}) ${v} \"$f\" & ;;")
-            formatters);
+            if config.devShell == null then [ ] else (config.devShell pkgs).packages pkgs;
+          caseArms = toString (
+            mapAttrsToList (n: v: "\n      ${n}) ${v} \"$f\" & ;;") formatters
+          );
         in
         pkgs.writeShellScriptBin "formatter" ''
           PATH=${if fullContext then "" else makeBinPath packages}
@@ -58,11 +82,18 @@ in
   config = mkMerge [
     (mkIf (config.formatter != null) {
       outputs.formatter = genSystems config.formatter;
-      checks.formatting = { lib, outputs', diffutils, ... }: ''
-        ${lib.getExe outputs'.formatter} .
-        ${diffutils}/bin/diff -qr ${src} . |\
-          sed 's/Files .* and \(.*\) differ/File \1 not formatted/g'
-      '';
+      checks.formatting =
+        {
+          lib,
+          outputs',
+          diffutils,
+          ...
+        }:
+        ''
+          ${lib.getExe outputs'.formatter} .
+          ${diffutils}/bin/diff -qr ${src} . |\
+            sed 's/Files .* and \(.*\) differ/File \1 not formatted/g'
+        '';
     })
 
     {

@@ -2,7 +2,13 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, flakelight, moduleArgs, ... }:
+{
+  config,
+  lib,
+  flakelight,
+  moduleArgs,
+  ...
+}:
 let
   inherit (lib) mkMerge mkOption mkIf;
   inherit (lib.types) lazyAttrsOf;

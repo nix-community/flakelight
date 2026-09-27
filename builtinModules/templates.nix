@@ -2,10 +2,21 @@
 # Copyright (C) 2023 Archit Gupta <archit@accelbread.com>
 # SPDX-License-Identifier: MIT
 
-{ config, lib, flakelight, moduleArgs, ... }:
+{
+  config,
+  lib,
+  flakelight,
+  moduleArgs,
+  ...
+}:
 let
   inherit (builtins) isPath isString;
-  inherit (lib) mkOption mkOptionType mkIf mkMerge;
+  inherit (lib)
+    mkOption
+    mkOptionType
+    mkIf
+    mkMerge
+    ;
   inherit (lib.types) lazyAttrsOf;
   inherit (lib.options) mergeEqualOption;
   inherit (flakelight.types) nullable optCallWith;
@@ -14,9 +25,13 @@ let
     name = "template";
     description = "template definition";
     descriptionClass = "noun";
-    check = x: (x ? path) && (isPath x.path) &&
-      (x ? description) && (isString x.description) &&
-      ((! x ? welcomeText) || (isString x.welcomeText));
+    check =
+      x:
+      (x ? path)
+      && (isPath x.path)
+      && (x ? description)
+      && (isString x.description)
+      && ((!x ? welcomeText) || (isString x.welcomeText));
     merge = mergeEqualOption;
   };
 in
@@ -28,8 +43,7 @@ in
     };
 
     templates = mkOption {
-      type = optCallWith moduleArgs
-        (lazyAttrsOf (optCallWith moduleArgs template));
+      type = optCallWith moduleArgs (lazyAttrsOf (optCallWith moduleArgs template));
       default = { };
     };
   };

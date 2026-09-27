@@ -8,7 +8,8 @@ real:
 let
   inherit (real) lib;
 
-  callPackageWith = autoArgs: fn: args:
+  callPackageWith =
+    autoArgs: fn: args:
     let
       f = if lib.isFunction fn then fn else import fn;
       fargs = lib.functionArgs f;
@@ -18,12 +19,13 @@ let
     f (mock // builtins.intersectAttrs fargs autoArgs // args);
 
   mockStdenv = builtins.mapAttrs (_: _: throw "") real.stdenv // {
-    mkDerivation = args:
-      if lib.isFunction args then lib.fix args else args;
+    mkDerivation = args: if lib.isFunction args then lib.fix args else args;
   };
 in
 lib.fix (self: {
-  lib = lib // { inherit callPackageWith; };
+  lib = lib // {
+    inherit callPackageWith;
+  };
 
   callPackage = callPackageWith self;
 

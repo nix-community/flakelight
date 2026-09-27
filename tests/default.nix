@@ -369,7 +369,6 @@ in
 
   devShell-empty = test
     (flakelight ./empty {
-      disabledModules = [ "builtinFormatters.nix" ];
       devShell = { };
     })
     (f: lib.isDerivation f.devShells.x86_64-linux.default);
@@ -382,7 +381,6 @@ in
 
   devShell-pkgDef-empty = test
     (flakelight ./empty {
-      disabledModules = [ "builtinFormatters.nix" ];
       devShell = { mkShell }: mkShell { };
     })
     (f: lib.isDerivation f.devShells.x86_64-linux.default);
@@ -686,6 +684,16 @@ in
     })
     (f: lib.isDerivation f.formatter.x86_64-linux);
 
+  formatters-merge-default = test
+    (flakelight ./empty ({ config, ... }: {
+      formatters = {
+        "*.rs" = "rustfmt";
+      };
+      outputs.test = config.formatters nixpkgs.legacyPackages.x86_64-linux;
+    }))
+    (f: f.test."*.rs" == "rustfmt"
+      && f.test."*.nix" == lib.getExe nixpkgs.legacyPackages.x86_64-linux.nixfmt);
+
   formatters-fn = test
     (flakelight ./empty {
       formatters = { rustfmt, ... }: {
@@ -705,18 +713,9 @@ in
 
   formatters-disable = test
     (flakelight ./empty {
-      flakelight.builtinFormatters = false;
+      formatter = null;
     })
     (f: ! f ? formatter.x86_64-linux);
-
-  formatters-disable-only-builtin = test
-    (flakelight ./empty {
-      flakelight.builtinFormatters = false;
-      formatters = { rustfmt, ... }: {
-        "*.rs" = "rustfmt";
-      };
-    })
-    (f: f ? formatter.x86_64-linux);
 
   bundler = test
     (flakelight ./empty {
@@ -904,7 +903,7 @@ in
 
   empty-flake = test
     (flakelight ./empty {
-      disabledModules = [ "builtinFormatters.nix" ];
+      formatter = null;
     })
     (f: f == { });
 

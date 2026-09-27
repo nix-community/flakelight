@@ -873,7 +873,7 @@ that take functions passed the package set, you can do the following:
 ### formatter
 
 ```
-Type: Pkgs -> Derivation
+Type: null | Pkgs -> Derivation
 ```
 
 The `formatter` option allows you to set `formatter.${system}` outputs. It can
@@ -906,11 +906,9 @@ The `formatters` option allows you to configure formatting tools that will be
 used by `nix fmt`. If formatters are set, Flakelight will export
 `formatter.${system}` outputs which apply all the configured formatters.
 
-By default, `nix` files are formatted with `nixpkgs-fmt` and `md`, `json`, and
-`yml` files are formatted with `prettier`.
+By default, `nix` files are formatted with `nixfmt`.
 
-To disable default formatters, set the `flakelight.builtinFormatters` option to
-false.
+To disable the generated formatter, set `formatter` to `null`.
 
 You can set `formatters` to an attribute set, for which the keys are a file name
 pattern and the value is the corresponding formatting command. `formatters` can
@@ -1211,13 +1209,9 @@ attribute names.
 ```
 Types:
   flakelight.editorconfig: Bool
-  flakelight.builtinFormatters: Bool
 ```
 
 This option has options for configuring Flakelight's defaults.
 
 `flakelight.editorconfig` can be set to false to disable the editorconfig check
 that is added if editorconfig configuration is detected.
-
-`flakelight.builtinFormatters` can be set to false to disable the default
-formatting configuration.

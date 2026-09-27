@@ -14,14 +14,14 @@ in
   config = mkIf config.flakelight.builtinFormatters {
     formatters = pkgs:
       let
-        nixpkgs-fmt = "${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt";
+        nixfmt = "${pkgs.nixfmt}/bin/nixfmt";
         # prefer-file would be better but does not work with prose-wrap
         prettier = "${pkgs.prettier}/bin/prettier --write"
           + " --cache-location=.prettiercache"
           + " --config-precedence file-override --prose-wrap always";
       in
       {
-        "*.nix" = mkDefault nixpkgs-fmt;
+        "*.nix" = mkDefault nixfmt;
         "*.md" = mkDefault prettier;
         "*.json" = mkDefault prettier;
         "*.yaml" = mkDefault prettier;

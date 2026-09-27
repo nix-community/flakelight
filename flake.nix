@@ -15,5 +15,6 @@
       templates = import ./templates;
       checks.statix = pkgs: "${pkgs.statix}/bin/statix check";
       outputs.tests = import ./tests inputs;
+      formatters = pkgs: { "*.nix" = "${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt"; };
     };
 }

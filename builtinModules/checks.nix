@@ -31,7 +31,7 @@ let
 
   mkCheck =
     name: pkgs: cmd:
-    pkgs.runCommand "check-${name}" { allowSubstitutes = false; } ''
+    pkgs.runCommandLocal "check-${name}" { } ''
       cp --no-preserve=mode -r ${src} src
       cd src
       ${cmd}
